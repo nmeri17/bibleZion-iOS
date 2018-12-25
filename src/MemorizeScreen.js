@@ -37,7 +37,7 @@ export default class MemorizeScreen extends React.Component {
 		if (navigation.state.routeName === 'MemorizeVerse' ) {
 
 			return s === void(0) ? titleBar: (() => {
-				titleBar.headerRight = <Icon name='md-menu'
+				titleBar.headerRight = <Icon name='md-more'
 
 		            style={{color: navigation.getParam('headerRightColor'), fontSize:35, right: 10}}
 		          
