@@ -49,34 +49,37 @@ export default class SettingsScreen extends React.Component {
 				if (action === TimePickerAndroid.timeSetAction) this.setAlarm(hour, minute);
 			}
 		}),
+
+		headerOptions: [{backgroundColor: '#195ea1', color: '#18e9af'}, {backgroundColor: '#eee', color: '#e01',
+
+			paddingVertical:6, paddingHorizontal: 10}],
 	}
 
 	static navigationOptions = ({ navigation }) => {
-	    return navigation.state.params.titleBar;
+
+		var newParams = {};
+
+		Object.assign(newParams, navigation.state.params.titleBar, {headerRight: null});
+
+	    return newParams;
 	};
 
 	componentDidMount() {
+		var that = this;
 
-		DBProps(({misc: {alarmActive,alarmId,alarmTime}}) =>
+		DBProps(({misc: {alarmActive,alarmId,alarmTime}}) =>{
 
-			this.setState({alarmTime: alarmTime, alarmActive: alarmActive, alarmId: alarmId},
+			that.setState({alarmTime: alarmTime, alarmActive: alarmActive, alarmId: alarmId},
 
-				() => this.getUpdatedProps()
+				() => that.getUpdatedProps()
 			)
-		);
+		});
 	}
-
-    componentWillReceiveProps(nextProps) {
-  		var {navigation: {state: {params}}} = nextProps;
-		
-		this.setState({globalStyles: params.bodyStyles, contentHeader: params.contentHeader});
-    }
 
     componentDidUpdate(prevProps, prevState) {
   		var {navigation: {state: {params}}} = prevProps;
 
   		params.dbRefresh(); // bubble latest changes to menu component
-  		// which will in turn call `componentWillReceiveProps`
     }
 
 	render () {
@@ -182,12 +185,14 @@ export default class SettingsScreen extends React.Component {
 		themeObj = mode == 'theme' ? this.props.themeOptions[itemIndex] : {bg: prevBg, fg: prevFg};
 
 		store.save('colorScheme', themeObj).then( () => {
-			console.log(themeObj)
+			
 			// save for scalar values
 			store.save('size', size).then( () => {
 				var {bg, fg} = themeObj;
 
-				this.setState({ globalStyles: { fontSize: size, backgroundColor: bg, color: fg }}, () =>this.getUpdatedProps())
+				this.setState({ globalStyles: { fontSize: size, backgroundColor: bg, color: fg },},
+
+				() =>this.getUpdatedProps())
 			})
 		}).catch(e => console.error(e));
 	}
@@ -245,18 +250,24 @@ export default class SettingsScreen extends React.Component {
 
 	getUpdatedProps () {
  
-		var {themeOptions, sizeOptions} = this.props, {backgroundColor,color, fontSize} = this.state.globalStyles,
+		var {themeOptions, sizeOptions, headerOptions} = this.props, {backgroundColor,color, fontSize} = this.state.globalStyles,
 
 		selectedTheme = themeOptions.findIndex(({bg,fg}) => bg==backgroundColor && fg==color),
 
 		// NOTE: scalar values here so the picker is holding actual values rather than indexes
 		selectedSize = sizeOptions.find(({value}) => {
 			return fontSize==value
-		});
+		}),
+
+		headerTheme = headerOptions.find(({backgroundColor:backgroundColorNew, color:colorNew}) =>
+			backgroundColorNew==backgroundColor || colorNew==color
+		);
 
 		selectedSize = selectedSize !== void(4) ? selectedSize.value: selectedSize;
 
-		this.setState({selectedTheme: selectedTheme, selectedSize: selectedSize});
+		this.setState({selectedTheme: selectedTheme, selectedSize: selectedSize,
+
+			contentHeader: headerTheme});
 	}
 
 	alarmAuthorized (status, {time, bool}) {

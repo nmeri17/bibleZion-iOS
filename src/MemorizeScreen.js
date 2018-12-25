@@ -32,16 +32,20 @@ export default class MemorizeScreen extends React.Component {
 
 	static navigationOptions = ({ navigation} ) => {
 
-		var titleBar = navigation.state.params.titleBar, s = navigation.getParam('headerRightHndlr');
+		var titleBar = navigation.state.params.titleBar, headerRightHndlr = navigation.getParam('headerRightHndlr'),
 
-		if (navigation.state.routeName === 'MemorizeVerse' ) {
+		isTest = navigation.getParam('screenMode') === 'test', noRightHeader = {};
 
-			return s === void(0) ? titleBar: (() => {
+		Object.assign(noRightHeader, titleBar, {headerRight: null});
+
+		if (navigation.state.routeName === 'MemorizeVerse' || isTest) {
+
+			return headerRightHndlr === void(0) || isTest ? noRightHeader: (() => {
 				titleBar.headerRight = <Icon name='md-more'
 
-		            style={{color: navigation.getParam('headerRightColor'), fontSize:35, right: 10}}
+		            style={{color: navigation.getParam('headerRightColor'), fontSize:35, /*right: 10,*/ width:40}}
 		          
-		            onPress={() => s()}
+		            onPress={() => headerRightHndlr()}
 		          />;
 
 		    	return titleBar;

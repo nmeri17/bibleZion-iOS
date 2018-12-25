@@ -18,7 +18,12 @@ export default class SaveScreen extends React.Component {
 	}
 
 	static navigationOptions = ({ navigation }) => {
-	    return navigation.state.params.titleBar;
+
+		var newParams = {};
+
+		Object.assign(newParams, navigation.state.params.titleBar, {headerRight: null});
+
+	    return newParams;
 	  };
 
 	componentDidMount() {

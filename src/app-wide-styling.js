@@ -48,7 +48,7 @@ o = (cb) => {
 	// meaning components should rely on their `state`s rather than on it
     if(data.ready !== false) {
 
-    	callback(data); // set ready to false and make another request to trigger update?
+    	cb(data); // set ready to false and make another request to trigger update?
     }
     // callback is undefined only on init (sync) but by this assignment, the module can be called without an argument
     else {

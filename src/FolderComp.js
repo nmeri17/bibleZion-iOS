@@ -21,7 +21,12 @@ export default class FolderComp extends React.Component {
 	}
 
 	static navigationOptions = ({ navigation }) => {
-	    return navigation.state.params.titleBar;
+
+		var newParams = {};
+
+		Object.assign(newParams, navigation.state.params.titleBar, {headerRight: null});
+
+	    return newParams;
 	};
 
 	// runs on update from the source/calling component
