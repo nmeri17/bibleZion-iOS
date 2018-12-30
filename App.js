@@ -10,6 +10,8 @@ import SaveScreen from './src/SaveScreen';
 
 import SettingsScreen from './src/SettingsScreen';
 
+import FinalContent from './src/FinalContent';
+
 
 
 const MenuItems = createStackNavigator({
@@ -25,19 +27,18 @@ const MenuItems = createStackNavigator({
 
         // Optional: Override the `navigationOptions` for the screen
         navigationOptions: ({ navigation }) => ({
-          title: 'save a verse'
+          title: 'Save a verse'
         }),
       },
       MemorizeVerse: {
         
         screen: MemorizeScreen,
-        params: {screenMode: 'memorize'},
 
         // Optional: When deep linking or using react-navigation in a web app, this path is used:
         // path: 'memorize/:folderName/:index',
         // The action and route params are extracted from the path.
         navigationOptions: ({ navigation }) => ({
-          title: 'memorize',
+          title: 'Memorize'
         }),
       },
       TestVerse: {
@@ -45,15 +46,19 @@ const MenuItems = createStackNavigator({
         screen: MemorizeScreen,
         params: {screenMode: 'test'},
         navigationOptions: ({ navigation }) => ({
-          title: 'test yourself',
+          title: 'Test yourself',
         }),
       },
       SettingsVerse: {
         
         screen: SettingsScreen,
         navigationOptions: ({ navigation }) => ({
-          title: 'settings'
+          title: 'Settings'
         }),
+      },
+      FinalScreen: {
+        
+        screen: FinalContent,
       },
     }, {headerMode : 'float'});
 
