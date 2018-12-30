@@ -18,13 +18,13 @@ export default class MenuScreen extends React.Component {
 	}
 
 	static defaultProps = {
-	   screens: [{name: 'save verse', route:'SaveVerse',icon: 'md-save', color: '#473775'},
+	   screens: [{name: 'Save verse', route:'SaveVerse',icon: 'md-save', color: '#473775'},
 
-	   	{name: 'memorize', route:'MemorizeVerse',icon: 'md-filing', color: '#4CAF50'},
+	   	{name: 'Memorize', route:'MemorizeVerse',icon: 'md-filing', color: '#4CAF50'},
 
-	   	{name: 'test yourself', route:'TestVerse',icon: 'md-school', color: '#fb0'},
+	   	{name: 'Test yourself', route:'TestVerse',icon: 'md-school', color: '#fb0'},
 
-	   	{name: 'settings', route:'SettingsVerse',icon: 'md-settings', color: '#795548'}],
+	   	{name: 'Settings', route:'SettingsVerse',icon: 'md-settings', color: '#795548'}],
 	 }
 
 	static navigationOptions = {

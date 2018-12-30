@@ -110,8 +110,6 @@ export default class MemorizeScreen extends React.Component {
 	fetchFreshFolders () {
     	store.get('AllFolders').then(function (arr) {
 
-    		arr = arr || []; // on install, this is null
-
 			this.setState({displayData: this.foldersAndHeader(arr), modalChild: null});
 
 	    }.bind(this));

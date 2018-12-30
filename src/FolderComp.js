@@ -242,7 +242,9 @@ const styles = StyleSheet.create({
 		marginHorizontal: 30,
 		paddingTop: 15,
 		paddingHorizontal: 10,
-		// boxShadow
+		shadowColor: '#aaa',
+		//shadowOffset: {right:5},
+		shadowOpacity: 4
 	},
 	toast: {
 		height: 30,

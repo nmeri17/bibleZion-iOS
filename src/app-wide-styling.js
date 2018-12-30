@@ -48,19 +48,25 @@ o = (cb) => {
 	// meaning components should rely on their `state`s rather than on it
     if(data.ready !== false) {
 
-    	cb(data); // set ready to false and make another request to trigger update?
+    	cb(data); // set ready to false and make another request to trigger update
     }
     // callback is undefined only on init (sync) but by this assignment, the module can be called without an argument
     else {
 
     	callback = cb;
-    	
+
     	init();
     }
 },
 
 // initial values on app install
-init = () => store.get('alarmTime').then(isset => {
+init = () => store.get('AllFolders').then(function (arr) {
+
+	// on install
+	if (arr === null) store.save('AllFolders', []);
+})
+
+.then(() => store.get('alarmTime')).then(isset => {
 
 	if (!isset) return store.save('alarmTime', data.misc.alarmTime);
 
@@ -107,4 +113,4 @@ init = () => store.get('alarmTime').then(isset => {
 });
 
 
-module.exports ={DBProps: o, RelatedStyle: getRelatedStyle};
+module.exports = {DBProps: o, RelatedStyle: getRelatedStyle};

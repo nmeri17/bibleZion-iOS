@@ -125,22 +125,27 @@ export default class SaveScreen extends React.Component {
 
 		{navigation: {state: {params}}} = this.props;
 
-		allFolders[targetFolder].verses.push(propObj);
+		var saveIn = allFolders[targetFolder];
 
-		if (toast) store.save('AllFolders', allFolders).then(() => that.saveRequest(() => {
-				
-				var data = allFolders[targetFolder].verses;
-	
-				// deep link to created view
-				that.props.navigation.navigate('FinalScreen', {itemIndx: data.length-1,
+		if (saveIn !== void(0)) {
 
-					bodyStyles: that.state.globalStyles, titleBar: params.titleBar,
+			saveIn.verses.push(propObj);
 
-					target: data, contentHeader: params.contentHeader} );
-			}, toast)
-		);
+			if (toast) store.save('AllFolders', allFolders).then(() => that.saveRequest(() => {
+					
+					var data = saveIn.verses;
+		
+					// deep link to created view
+					that.props.navigation.navigate('FinalScreen', {itemIndx: data.length-1,
 
-		else this.saveRequest(() => console.log(propObj), toast);
+						bodyStyles: that.state.globalStyles, titleBar: params.titleBar,
+
+						target: data, contentHeader: params.contentHeader} );
+				}, toast)
+			);
+
+			else this.saveRequest(() => console.log(propObj), toast);
+		}
 	}
 
 	selectAFolder (val,i) {
