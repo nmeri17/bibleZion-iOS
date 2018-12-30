@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 
-import { Text, TextInput, View, StyleSheet, SectionList, } from 'react-native';
+import { Text, TextInput, View, StyleSheet, SectionList, TouchableOpacity} from 'react-native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -22,7 +22,7 @@ export default class FinalContent extends React.Component {
 
 		this.state = {modalChild: null, res2: null, res1: null, globalStyles: params.bodyStyles,
 
-			titleBar: params.titleBar, contentHeader: params.contentHeader,
+			titleBar: params.titleBar, contentHeader: params.contentHeader, childCloseToggle: null
 		};
 	}
 
@@ -53,13 +53,31 @@ export default class FinalContent extends React.Component {
 	render() {
 		var {globalStyles, contentHeader, titleBar, modalChild} = this.state,
 
-		{navigation: {state: {params}}} = this.props;
+		{navigation: {state: {params}}} = this.props, that = this;
 
 		if (params.screenMode == 'test') { // source: navigation wrapper or caller
 
-			var contextView = params.target[params.itemIndx], testTitle = params.target.quotation,
+			var targetObj = params.target[params.itemIndx], contextView = <View key='testView'>
+				
+				<Text style={contentHeader}>title</Text>
+				
+				<Text>{targetObj.quotation}</Text>
 
-			childCloseToggle= this.testVerseAssert.bind(this);
+				<View>
+					<TextInput multiline={true} style={styles.testBox} placeholder='reading' ref='testBox'/>
+					
+					<TouchableOpacity onPress={() => {
+						var userInput = that.refs.testBox._lastNativeText;
+
+						if (userInput !== void(0)) that.testVerseAssert(userInput);
+					}}
+
+		    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+		    			
+		    			<Text style={{color:globalStyles.backgroundColor}}>Check</Text>
+		    		</TouchableOpacity>
+				</View>
+			</View>
 		}
 
 		else {
@@ -101,13 +119,11 @@ export default class FinalContent extends React.Component {
 
 		return <FolderComp
 
-			formattedComponents={contextView} testTitle={testTitle}
+			formattedComponents={contextView} noDiff={this.state.res1} noDiff2={this.state.res2}
 
-			modalChild={this.state.modalChild} noDiff={this.state.res1} noDiff2={this.state.res2}
+			modalChild={this.state.modalChild} contentHeader={contentHeader} titleBar={titleBar}
 
-			bodyStyles={globalStyles} contentHeader={contentHeader}
-
-			onChildModalClose={childCloseToggle} titleBar={titleBar}			
+			bodyStyles={globalStyles} onChildModalClose={this.state.childCloseToggle}
 		/>;
 	}
 
@@ -126,9 +142,9 @@ export default class FinalContent extends React.Component {
 
 			noDiff2 = BadToGood(target, userInput.trim(), styles.nullText);
 
-			if (!noDiff) return {modalChild: 1, childCloseToggle: () => console.log('is a close handler still necessary?'/*this.fetchFreshFolders.bind(this)*/)};
+			if (!noDiff) return {modalChild: 1, childCloseToggle: () => props.navigation.goBack()};
 
-			else return {modalChild: 2, res1: noDiff, res2: noDiff2, childCloseToggle: () => console.log('is a close handler still necessary?'/*this.fetchFreshFolders.bind(this)*/)};
+			else return {modalChild: 2, res1: noDiff, res2: noDiff2, childCloseToggle: null};
 		});
 	}
 }
@@ -140,4 +156,13 @@ const styles = StyleSheet.create({
 	correctText: {
 		color: 'green',
 	},
+	testBox: {
+		height: 60
+	},
+	  checkButton: {
+	  	marginHorizontal: 5,
+	  	paddingVertical: 10,
+	  	paddingHorizontal: 5,
+	  	borderRadius: 5,
+	  },
 });

@@ -31,10 +31,9 @@ export default class SettingsScreen extends React.Component {
 
 	  static defaultProps = {
 
-		themeOptions: [ {name: 'white on blue', fg: '#fff', bg: '#195ea1'}, {name: 'red on white', fg: '#e01', bg: '#fff'} ],
+		themeOptions: [ {name: 'White on blue', fg: '#fff', bg: '#195ea1'}, {name: 'Red on white', fg: '#e01', bg: '#fff'} ],
 
-		sizeOptions: [ {name: 'large', value: 150}, {name: 'normal', value: 100}, {name: 'small', value: 80},
-		  	{name: 'extra large', value: 200}],
+		sizeOptions: [ {name: 'Large', value: 150}, {name: 'Normal', value: 100}, {name: 'Small', value: 80}],
 
 		alarmOutput: Platform.select({
 			ios: <TimePicker
@@ -93,24 +92,27 @@ export default class SettingsScreen extends React.Component {
 		themeSection = [
 			(
 				<View style={catContainer}>
-					<Text style={catStyles}>Skin</Text>
+					<Text style={[catStyles, { left: 5}]}>Skin</Text>
 					<Picker mode='dropdown' selectedValue={selectedTheme}
 						onValueChange = {(itemValue, itemIndex) => this.saveSettings(itemValue, itemIndex,'theme')}
 						style={catStyles}
 					>
-						{themeOptions.map((obj,i) => <Picker.Item label={obj.name} value={i} key={'ts'+i} />)}
+						{themeOptions.map((obj,i) => <Picker.Item label={obj.name} value={i} key={'ts'+i} style={styles.pickerItem} />)}
 					</Picker>
 				</View>
 			),
 			(
 				<View style={catContainer}>
-					<Text style={catStyles}>Text size</Text>
+					<Text style={[catStyles, { left: 5}]}>Text size</Text>
 					
 					<Picker mode='dropdown' selectedValue={selectedSize}
 						onValueChange = {(itemValue, itemIndex) => this.saveSettings(itemValue, itemIndex,'size')}
 						style={catStyles}
 					>
-						{this.props.sizeOptions.map((obj,i) => <Picker.Item label={obj.name} value={obj.value} key={'ss'+i} />)}
+						{this.props.sizeOptions.map((obj,i) =>
+
+							<Picker.Item label={obj.name} value={obj.value} key={'ss'+i} style={styles.pickerItem} />
+						)}
 					</Picker>
 				</View>
 			)
@@ -120,12 +122,12 @@ export default class SettingsScreen extends React.Component {
 				<View ref='alarmRow' style={[catContainer, {justifyContent: 'space-between',flex:1}]}>
 					<View style={{flex: 5}}>
 						<TouchableOpacity onPress={() =>(alarmOutput.bind(this))()}
-							style={{flex:2}}
+							style={{flex:2, marginBottom:5}}
 						>
-							<Text style={catStyles}>Reminder time</Text>
+							<Text style={[catStyles, { left: 5}]}>Reminder time</Text>
 						</TouchableOpacity>
 
-						<Text style={[{flex:1}, catStyles]}>{alarmTime}</Text>
+						<Text style={[{flex:1, opacity: .5, left: 5}, catStyles]}>{alarmTime}</Text>
 					</View>
 					<Button title='cancel' disabled={!alarmActive} onPress={() => this.alarmToggleHandler}
 						style={{flex: 1}}/>
@@ -133,9 +135,11 @@ export default class SettingsScreen extends React.Component {
 			),
 			(
 				<View style={catContainer}>
-					<Text style={catStyles}>synchronize</Text>
+					<Text style={[catStyles, { left: 5}]}>Synchronize</Text>
 					<Picker 
-						children={['Google Drive', 'DropBox', 'One Drive'].map((el,i) => <Picker.Item label={el} value={i} key={i} />)}
+						children={['Google Drive', 'DropBox', 'One Drive'].map((el,i) =>
+							<Picker.Item label={el} value={i} key={i} style={styles.pickerItem} />
+						)}
 						mode='dropdown' style={catStyles}
 						>
 					</Picker>
@@ -144,7 +148,7 @@ export default class SettingsScreen extends React.Component {
 		];
 
 		return (
-			<View style={{flex:1, paddingVertical: 50, paddingHorizontal:10, backgroundColor: globalStyles.backgroundColor}}>
+			<View style={{flex:1, paddingVertical: 30, paddingHorizontal:10, backgroundColor: globalStyles.backgroundColor}}>
 				<SectionList
 					renderItem={({item, index, separators}) => (
    						
@@ -156,7 +160,7 @@ export default class SettingsScreen extends React.Component {
   
   					renderSectionHeader={({section: {title}}) => (
     			
-    					<Text style={contentHeader}>{title}</Text>
+    					<Text style={[contentHeader, {marginVertical:10}]}>{title}</Text>
   					)}
 					
 					/*ItemSeparatorComponent={() => <View style={{ height: 1, flex: 1, backgroundColor: "#99a" }}/>
@@ -229,12 +233,12 @@ export default class SettingsScreen extends React.Component {
 		var that = this;console.log(err)
 		that._toast.show({
 			position: Toast.constants.gravity.top,
-  			duration: 255,
+  			duration: 50,
 			children: err,
 			animationEnd: () => {
 				that._toast._toastAnimationToggle = setTimeout(() => {
 					that._toast.hide({
-					duration: 5,
+					duration: 1,
 						animationEnd: () => { /* do something, anything! */ }
 					});
 				}, 3000);
@@ -250,7 +254,9 @@ export default class SettingsScreen extends React.Component {
 
 	getUpdatedProps () {
  
-		var {themeOptions, sizeOptions, headerOptions} = this.props, {backgroundColor,color, fontSize} = this.state.globalStyles,
+		var {themeOptions, sizeOptions, headerOptions, navigation} = this.props, {globalStyles, titleBar, contentHeader} = this.state,
+
+		{backgroundColor,color, fontSize} = globalStyles,
 
 		selectedTheme = themeOptions.findIndex(({bg,fg}) => bg==backgroundColor && fg==color),
 
@@ -267,7 +273,17 @@ export default class SettingsScreen extends React.Component {
 
 		this.setState({selectedTheme: selectedTheme, selectedSize: selectedSize,
 
-			contentHeader: headerTheme});
+			contentHeader: headerTheme
+		}, () => {
+			// prevent run on init page load
+			if (globalStyles.__lookupSetter__('color') === void(0)) {
+				// take us back to menu so header bar can refresh
+				navigation.push('menu',{bodyStyles: globalStyles, contentHeader: contentHeader,
+
+					dbRefresh: navigation.getParam('dbRefresh')
+				});
+			}
+		});
 	}
 
 	alarmAuthorized (status, {time, bool}) {
@@ -317,5 +333,10 @@ const styles = StyleSheet.create({
 	rows: {
 		flex: 1,
 		flexDirection: 'row',
+	},
+	pickerItem: {
+		fontSize: 70,
+		left: 0,
+		maxHeight: 35
 	}
 });

@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 
-import {StyleSheet, Text, View, Modal, TouchableOpacity, TextInput, StatusBar, SafeAreaView, } from 'react-native';
+import {StyleSheet, Text, View, Modal, TouchableOpacity, TextInput, StatusBar, SafeAreaView, ScrollView} from 'react-native';
 
 import Toast from 'rn-toaster';
 
@@ -16,7 +16,7 @@ export default class FolderComp extends React.Component {
 		this.state = {
 			popup: false, headerTitle: props.headerTitle, formattedComponents: props.formattedComponents,
 
-			showTestButton: false, globalStyles: props.bodyStyles, contentHeader: props.contentHeader
+			globalStyles: props.bodyStyles, contentHeader: props.contentHeader
 		};
 	}
 
@@ -41,10 +41,10 @@ export default class FolderComp extends React.Component {
 		this._toast._toastAnimationToggle = setTimeout(() => {
 			// confirm there's a toast to suppress
 			if (this._toast !== null) this._toast.hide({
-				duration: 5,
+				duration: 1,
 				animationEnd: () => {/* post toast action goes here */ }
 			});
-		}, 3000);
+		}, 500);
 	}
 
 	render () {
@@ -54,29 +54,7 @@ export default class FolderComp extends React.Component {
 
 		{headerTitle, formattedComponents, popup, showTestButton, contentHeader} = this.state,
 
-		{testBox} = this.refs, foreigners = [ headerTitle, formattedComponents,
-			
-			<View key='testView' style={testTitle ? styles.testView: styles.noTestView}>
-				
-				<Text style={contentHeader}>title</Text>
-				
-				<Text>{testTitle}</Text>
-
-				<View>
-					<TextInput multiline={true} style={styles.testBox} placeholder='reading' ref='testBox'
-						
-						onChange={() => this.setState({showTestButton: testBox._lastNativeText !== void(9) && testBox._lastNativeText.length > 1})}
-					/>
-					
-					<TouchableOpacity title='' onPress={() => showTestButton ? this.closeModal(testBox._lastNativeText) : false}
-
-		    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
-		    			
-		    			<Text style={{color:globalStyles.backgroundColor}}>Check</Text>
-		    		</TouchableOpacity>
-				</View>
-			</View>
-		];
+		foreigners = [ headerTitle, formattedComponents];
 
 		return (
 
@@ -122,17 +100,28 @@ export default class FolderComp extends React.Component {
 	    		</TouchableOpacity>
 			</View>,
 
-			<View style={styles.modalStyles}>
-				<Text style={{color: contentHeader.color}}>Success! you remembered everything!</Text>
+			<View style={[styles.modalStyles, {marginTop: 150, minHeight: 150}]}>
+				<Text style={{color: contentHeader.color, marginBottom: 20}}>Success! you remembered everything!</Text>
+					
+				<TouchableOpacity onPress={() => this.closeModal()}
+
+	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+	    			
+	    			<Text style={{color:globalStyles.backgroundColor}}>Test another verse</Text>
+
+	    		</TouchableOpacity>
 			</View>,
 			
-			<View style={styles.modalStyles}>
+			<View style={[styles.modalStyles, {marginTop: 150, minHeight: 250}]}>
 				<Text style={{color: contentHeader.color}}>Correct text</Text>
-				<View style={styles.testResults}>{this.props.noDiff}</View>
+				<ScrollView>
+					<View style={styles.testResults}>{this.props.noDiff}</View>
+				</ScrollView>
 
 				<Text style={{color: contentHeader.color}}>Your answer</Text>
-				<View style={styles.testResults}>{this.props.noDiff2}</View>
-				<View>
+				<ScrollView>
+					<View style={styles.testResults}>{this.props.noDiff2}</View>
+				</ScrollView>
 					
 				<TouchableOpacity onPress={() => this.closeModal()}
 
@@ -141,8 +130,6 @@ export default class FolderComp extends React.Component {
 	    			<Text style={{color:globalStyles.backgroundColor}}>Try again</Text>
 
 	    		</TouchableOpacity>
-				
-				</View>
 			</View>,
 
 			<View style={styles.headerMenu}>
@@ -156,7 +143,7 @@ export default class FolderComp extends React.Component {
 
 				<TextInput ref='renameFolderInput' placeholder='New name' underlineColorAndroid='green' />
 
-			{/*this method should've lived on its component (called through modal close). but we don't want
+			{/* `folderRename` lived on its component (called through modal close). but we don't want
 				that handler to run on back press
 			*/}
 				<TouchableOpacity onPress={() => this.folderRename()}
@@ -185,15 +172,20 @@ export default class FolderComp extends React.Component {
 		var name = this.refs.newFolderInput._lastNativeText, that = this;
 
 		if (name) // folders schema. 'verses' holds objects with the signature {quotation: '', text:''}
-		store.push('AllFolders', {folderName: name, verses: []}).then(function() {
-    		// toast our babes or to success
-			that._toast.show({
-				position: Toast.constants.gravity.top,
-      			duration: 255,
-				children: "saved",
-				animationEnd: () => that.closeModal()
-			})
-		});
+		store.get('AllFolders').then(items => {
+
+			var noDup = items.every(m => m.folderName != name);
+
+			if (noDup) store.push('AllFolders', {folderName: name, verses: []}).then(function() {
+	    		// toast our babes or to success
+				that._toast.show({
+					position: Toast.constants.gravity.top,
+	      			duration: 50,
+					children: "saved",
+					animationEnd: () => that.closeModal()
+				})
+			});
+		})
 	}
 
 	folderRename () {
@@ -223,7 +215,7 @@ export default class FolderComp extends React.Component {
 
 			store.save('AllFolders', items).then(() => that._toast.show({
 				position: Toast.constants.gravity.top,
-      			duration: 255,
+      			duration: 50,
 				children: "Rename successful",
 				animationEnd: () => that.closeModal()
 			}))
@@ -235,7 +227,7 @@ export default class FolderComp extends React.Component {
 
 		store.save('AllFolders', []).then(() => that._toast.show({
 			position: Toast.constants.gravity.top,
-  			duration: 255,
+  			duration: 50,
 			children: "Deleted all documents",
 			animationEnd: () => that.closeModal()
 		}))
@@ -260,19 +252,8 @@ const styles = StyleSheet.create({
 		display: 'flex',
 		flexDirection: 'row',
 		flexWrap: 'wrap',
+		marginTop: 10
 	},
-	noTestView: {
-		display: 'none',
-	},
-	testBox: {
-		height: 60
-	},
-	  checkButton: {
-	  	marginHorizontal: 5,
-	  	paddingVertical: 10,
-	  	paddingHorizontal: 5,
-	  	borderRadius: 5,
-	  },
 	  headerMenu: {
 	  	left: 200,
 	  	top: 50, // this should've been read from the icon's position
@@ -281,5 +262,13 @@ const styles = StyleSheet.create({
 		paddingVertical: 10,
 		maxWidth: 120,
 		borderRadius: 5
+	  },
+	  checkButton: {
+	  	marginHorizontal: 5,
+	  	paddingVertical: 10,
+	  	paddingHorizontal: 5,
+	  	borderRadius: 5,
+		bottom: 0,
+		marginBottom: 5
 	  }
 });

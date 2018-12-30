@@ -43,7 +43,7 @@ export default class MemorizeScreen extends React.Component {
 			return headerRightHndlr === void(0) || isTest ? noRightHeader: (() => {
 				titleBar.headerRight = <Icon name='md-more'
 
-		            style={{color: navigation.getParam('headerRightColor'), fontSize:35, /*right: 10,*/ width:40}}
+		            style={{color: navigation.getParam('headerRightColor'), fontSize:35, /*right: 10,*/ width:30}}
 		          
 		            onPress={() => headerRightHndlr()}
 		          />;
@@ -56,21 +56,26 @@ export default class MemorizeScreen extends React.Component {
   
   	// this runs after the first `render` call
   	componentDidMount() {
-  		var {navigation: {state: {params}}} = this.props, that = this;
+  		var {navigation: {state: {params}}} = this.props, that = this,
 
+  		{headerRightHndlr, target, itemIndx, lastVisited, titleBar} = params;
+
+		// mutate over folders, if any
   		// this runs async
-		if (!params.headerRightHndlr) that.props.navigation.setParams({
+		if (!headerRightHndlr && !target) that.props.navigation.setParams({
 			headerRightHndlr: function() {
 
-	    		that.setState({childCloseToggle: (ind) =>that.headerMenuClose(ind), modalChild: 3})
+	    		if (that.state.displayData.props.data.length > 1) that.setState({childCloseToggle: (ind) =>
+
+	    			that.headerMenuClose(ind), modalChild: 3})
 	    	},
 
-	    	headerRightColor: params.titleBar.headerTintColor
+	    	headerRightColor: titleBar.headerTintColor
     	});
 
-  		params.target
+  		target
 
-  			? this.setState({displayData: this.foldersAndHeader(params.target[params.itemIndx][params.lastVisited])})
+  			? this.setState({displayData: this.foldersAndHeader(target[itemIndx][lastVisited])})
 
   			: this.fetchFreshFolders();
     }
@@ -125,7 +130,7 @@ export default class MemorizeScreen extends React.Component {
 
 		possibleModes = Object.keys(screenMap), lastVisited = params.lastVisited || possibleModes[0],
 
-		addButton = <Icon style={[styles.folders, styles.dataColumn, globalStyles]}
+		addButton = <Icon style={[styles.folders, styles.dataColumn, {color:globalStyles.color}]}
 
 			key='add new' name='md-add-circle'
 			
@@ -140,19 +145,28 @@ export default class MemorizeScreen extends React.Component {
 				return true;
 			}
 			return false;
-		})();
+		})(),
+
+		testNoFolder = <View style={{flexDirection: 'row'}}>
+
+			<Text style={{marginLeft: 10, color: globalStyles.color}} onPress={() => navigation.navigate('MemorizeVerse',
+
+				{titleBar: params.titleBar, bodyStyles: globalStyles, contentHeader: contentHeader})}
+			>Create a folder to begin</Text>
+
+			<Icon name='md-rocket' size={15} style={{color: globalStyles.color, marginLeft: 10}} />
+		</View>;
 
         if (!data.length ) {
-        	if (isTest) folders =
-        		<View key='cv' style={{flexDirection: 'row'}}>
-					<Text onPress={() => navigation.navigate('MemorizeVerse',
+        	folders = <View key='cv'>
 
-						{titleBar: params.titleBar, bodyStyles: globalStyles, contentHeader: contentHeader})}
-					>create a folder to begin</Text>
-					<Icon name='md-rocket' size={15} style={{color: globalStyles.color}} />
-				</View>
-			;
-			else folders = lastVisited == 'verses' ? <Text key='cv'>empty folder</Text> : addButton;
+        		{lastVisited == 'verses'
+
+    				? <Text key='mtfldr'>empty folder</Text>
+
+    				: isTest ? testNoFolder : addButton
+        		}
+			</View>;
 		}
 
 		else {
@@ -174,11 +188,15 @@ export default class MemorizeScreen extends React.Component {
 
 	          	return <View key={'items'+index} style={styles.dataColumn}>
 		        	<Icon
-			    		name={iconName} style={[styles[lastVisited], styles.folders, globalStyles]}
+			    		name={iconName} style={[styles[lastVisited], styles.folders, {color:globalStyles.color}]}
 
 			    		onPress={headerMenuIndx === null || headerMenuIndx === void(2) ?() => {
 
-			    			 var scrName = ['MemorizeVerse', 'FinalScreen'][currScr];
+			    			 var scrName = ['MemorizeVerse', 'FinalScreen'];
+
+			    			 scrName = currScr === 0
+			    			 	? isTest ? 'TestVerse' : scrName[currScr]
+			    			 	: scrName[currScr];
 
 				    			navigation.push(scrName, {lastVisited: possibleModes[currScr+1],
 
@@ -219,19 +237,22 @@ export default class MemorizeScreen extends React.Component {
 
 			if (ind === 0) this.setState({headerMenuIndx: ind, modalChild: null, displayData: null}, () =>{
 
-				// setting the first state since foldersAndHeader expects a live value from headerMenuIndx
+				// set an init state above since foldersAndHeader expects a live value from headerMenuIndx
+
+				// omit the add button in the current view since foldersAndHeader will still give us another one
+				currData.shift()
 				this.setState({displayData: this.foldersAndHeader(currData)})
 			});
 
 			// delete dialog should be raised at once so dont overwrite curr view
-			else this.setState({headerMenuIndx: ind, modalChild: 4+ ind});
+			else this.setState({headerMenuIndx: ind, modalChild: 4+ ind, childCloseToggle: () => this.fetchFreshFolders()});
 		}
 	}
 }
 
 const styles = StyleSheet.create({
 	folders: {
-		fontSize: 30,
+		fontSize: 80,
 	},
 	nullText: {
 		color: 'red',

@@ -75,9 +75,9 @@ export default class SaveScreen extends React.Component {
 			flexDirection: 'row', flexWrap: 'wrap'
 		},
 
-		allowSave = () => !this.state.allFolders? true:false &&
+		allowSave = () => Object.keys(this.refs).every(r => this.refs[r]._lastNativeText !== void(0))
 
-			!Object.keys(this.refs).every(r => this.refs[r]._lastNativeText !== void(0) || this.state.selectedFolder);
+			&& this.state.selectedFolder !== 'select a folder';
 
 	    return (
 	    	<View style={mainStyles}>
@@ -108,19 +108,16 @@ export default class SaveScreen extends React.Component {
 
 		var propObj = {};
 
-		for (var key in this.refs) {
+		for (var key in this.refs) propObj[key] = this.refs[key]._lastNativeText.trim();
 
-			propObj[key] = this.refs[key]._lastNativeText.trim();
-
-			if (propObj[key] == void(0)) propObj[key] = this.state.selectedFolder;
-		}
+		propObj.newFolderSelect = this.state.selectedFolder;
 
 		// remove picker init
-		var allFolders = this.state.allFolders;
+		var allFolders = this.state.allFolders, that = this;
 
 		allFolders.shift();
 
-		var toast = +Object.keys(propObj).every(y => propObj[y].length > 5),
+		var toast = +Object.keys(propObj).every(y => propObj[y].length > 1),
 
 		targetFolder = allFolders.findIndex(obj => {
 			return obj.folderName == propObj.newFolderSelect;
@@ -130,14 +127,14 @@ export default class SaveScreen extends React.Component {
 
 		allFolders[targetFolder].verses.push(propObj);
 
-		if (toast) store.save('AllFolders', allFolders).then(() => this.saveRequest(() => {
+		if (toast) store.save('AllFolders', allFolders).then(() => that.saveRequest(() => {
 				
 				var data = allFolders[targetFolder].verses;
 	
 				// deep link to created view
-				this.props.navigation.navigate('FinalScreen', {itemIndx: data.length-1,
+				that.props.navigation.navigate('FinalScreen', {itemIndx: data.length-1,
 
-					bodyStyles: this.state.globalStyles, titleBar: params.titleBar,
+					bodyStyles: that.state.globalStyles, titleBar: params.titleBar,
 
 					target: data, contentHeader: params.contentHeader} );
 			}, toast)
@@ -150,12 +147,13 @@ export default class SaveScreen extends React.Component {
 		this.setState({selectedFolder:val});
 	}
 
+	// just for toasts
 	saveRequest (onComplete, ind) {
-		var toastMsg = ['please fill in all fields', 'save successful'], ctx = this;
+		var toastMsg = ['Please fill in all fields', 'Save successful'], ctx = this;
 
 		ctx._toast.show({
 			position: Toast.constants.gravity.top,
-  			duration: 200,
+  			duration: 50,
 			children: toastMsg[ind],
 			animationEnd: () => {
 				ctx._toast._toastAnimationToggle = setTimeout(() => {
@@ -163,7 +161,7 @@ export default class SaveScreen extends React.Component {
 						duration: 1,
 						animationEnd: () => onComplete()
 					});
-				}, 3000);
+				}, 500);
 			},
 		})
 	}
