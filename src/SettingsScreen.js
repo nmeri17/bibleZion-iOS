@@ -33,7 +33,7 @@ export default class SettingsScreen extends React.Component {
 
 		themeOptions: [ {name: 'White on blue', fg: '#fff', bg: '#195ea1'}, {name: 'Red on white', fg: '#e01', bg: '#fff'} ],
 
-		sizeOptions: [ {name: 'Large', value: 150}, {name: 'Normal', value: 100}, {name: 'Small', value: 80}],
+		sizeOptions: [ {name: 'Large', value: 30}, {name: 'Normal', value: 20}, {name: 'Small', value: 15}],
 
 		alarmOutput: Platform.select({
 			ios: <TimePicker

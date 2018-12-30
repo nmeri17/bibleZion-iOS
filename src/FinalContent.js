@@ -53,18 +53,24 @@ export default class FinalContent extends React.Component {
 	render() {
 		var {globalStyles, contentHeader, titleBar, modalChild} = this.state,
 
-		{navigation: {state: {params}}} = this.props, that = this;
+		{navigation: {state: {params}}} = this.props, that = this, {backgroundColor, color, fontSize} = globalStyles;
 
 		if (params.screenMode == 'test') { // source: navigation wrapper or caller
 
-			var targetObj = params.target[params.itemIndx], contextView = <View key='testView'>
+			var targetObj = params.target[params.itemIndx], fzContent = {fontSize: fontSize > 15
+
+				? fontSize > 20? fontSize-10: fontSize- 5
+				: fontSize}, contextView = <View key='testView'
+
+			style={{paddingHorizontal: 15}}>
 				
-				<Text style={contentHeader}>title</Text>
+				<Text style={[contentHeader, {fontSize: fontSize}]}>Title</Text>
 				
-				<Text>{targetObj.quotation}</Text>
+				<Text style={[fzContent, {marginBottom: 15, left: 15}]}>{targetObj.quotation}</Text>
 
 				<View>
-					<TextInput multiline={true} style={styles.testBox} placeholder='reading' ref='testBox'/>
+					<Text style={[contentHeader, {fontSize: fontSize}]}>Reading</Text>
+					<TextInput multiline={true} style={[styles.testBox, fzContent]} placeholder='Type here' ref='testBox'/>
 					
 					<TouchableOpacity onPress={() => {
 						var userInput = that.refs.testBox._lastNativeText;
@@ -72,9 +78,9 @@ export default class FinalContent extends React.Component {
 						if (userInput !== void(0)) that.testVerseAssert(userInput);
 					}}
 
-		    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+		    			style={[{ backgroundColor: color}, styles.checkButton] }>
 		    			
-		    			<Text style={{color:globalStyles.backgroundColor}}>Check</Text>
+		    			<Text style={{color:backgroundColor}}>Check</Text>
 		    		</TouchableOpacity>
 				</View>
 			</View>
@@ -88,7 +94,7 @@ export default class FinalContent extends React.Component {
   
   					renderSectionHeader={({section: {title}}) => (
     			
-    					<Text style={contentHeader}>{title}</Text>
+    					<Text style={[contentHeader, {fontSize: fontSize}]}>{title}</Text>
   					)}
 
   					sections={[
@@ -98,9 +104,7 @@ export default class FinalContent extends React.Component {
 
 					keyExtractor={(item, index) => 'lastVisited:' + index}
 				/></View>)
-			),
-
-			{backgroundColor, color} = globalStyles;
+			);
 
 			contextView = <IndicatorViewPager key='cv'
 				initialPage={params.itemIndx}

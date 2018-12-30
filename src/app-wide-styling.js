@@ -3,7 +3,7 @@ import React, {Component} from 'react';
 import store from 'react-native-simple-store';
     
 
-var colorScheme = {bg: '#195ea1', fg: '#fff'}, size = 100, callback,
+var colorScheme = {bg: '#195ea1', fg: '#fff'}, size = 20, callback,
 
 fh = [{
 	headerStyle: {
