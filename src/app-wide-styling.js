@@ -2,12 +2,13 @@ import React, {Component} from 'react';
 
 import store from 'react-native-simple-store';
     
+// default appearance
+var colorScheme = {bg: '#000', fg: '#A5887E'}, size = 20, callback,
 
-var colorScheme = {bg: '#195ea1', fg: '#fff'}, size = 20, callback,
-
+// titleBar opts
 fh = [{
 	headerStyle: {
-      backgroundColor: '#195ea1',
+      backgroundColor: '#195ea1', // blue
     },
     headerTintColor: '#fff'/*,
     headerTitleStyle: {
@@ -16,18 +17,28 @@ fh = [{
   },
   {
 	headerStyle: {
-      backgroundColor: '#e01',
+      backgroundColor: '#e01', // red
     },
     headerTintColor: '#fff'
+	},
+  {
+	headerStyle: {
+      backgroundColor: '#333',
+    },
+    headerTintColor: '#A5887E'
 	}
 ],
 
+// header styles
 th = [{backgroundColor: '#195ea1', color: '#18e9af'}, {backgroundColor: '#eee', color: '#e01',
 
-	paddingVertical:6, paddingHorizontal: 10}],
+	paddingVertical:6, paddingHorizontal: 10}, {backgroundColor: '#333', color: '#A5887E'}],
+
 
 getRelatedStyle = (appWideStyles, mode) => {
-	var ctx = [fh, th][mode], fhCb = ({headerStyle: {backgroundColor}, headerTintColor}) =>
+	var ctx = [fh, th][mode],
+
+	fhCb = ({headerStyle: {backgroundColor}, headerTintColor}) =>
 
 		appWideStyles.backgroundColor==backgroundColor || appWideStyles.color==backgroundColor,
 
@@ -39,13 +50,26 @@ getRelatedStyle = (appWideStyles, mode) => {
 	return ctx.find(cbCtx);
 }
 
-data= {misc: {alarmId: 3, alarmTime: '00:00', alarmActive: false}, appWideStyles: {}, ready: false},
+data= {misc: 
+
+		alarms: {
+
+			morning: {alarmId: 1, alarmTime: '08:30', alarmActive: false},
+
+			afternoon: {alarmId: 2, alarmTime: '01:15', alarmActive: false},
+
+			evening: {alarmId: 3, alarmTime: '07:30', alarmActive: false},
+		},
+
+		appWideStyles: {},
+
+		ready: false
+	},
 
 // this method accepts a callback of what to do with the styles once gotten from DB
 o = (cb) => {
 	
 	// subsequent requests to this module shouldnt make another roundtrip
-	// meaning components should rely on their `state`s rather than on it
     if(data.ready !== false) {
 
     	cb(data); // set ready to false and make another request to trigger update
@@ -64,27 +88,28 @@ init = () => store.get('AllFolders').then(function (arr) {
 
 	// on install
 	if (arr === null) store.save('AllFolders', []);
+	// folders schema: [{folderName: name, verses: [{quotation: '', text:''}]}]
 })
 
-.then(() => store.get('alarmTime')).then(isset => {
+.then(() => store.get('morningAlarm')).then(isset => {
 
-	if (!isset) return store.save('alarmTime', data.misc.alarmTime);
+	if (!isset) return store.save('morningAlarm', data.misc.alarms.morning);
 
-	else data.misc.alarmTime = isset;
+	else data.misc.alarms.morning = isset;
 })
 
-.then(() => store.get('alarmActive')).then(isset => {
+.then(() => store.get('afternoonAlarm')).then(isset => {
 
-	if (!isset) return store.save('alarmActive', data.misc.alarmActive);
+	if (!isset) return store.save('afternoonAlarm', data.misc.alarms.afternoon);
 
-	else data.misc.alarmActive = isset;
+	else data.misc.alarms.afternoon = isset;
 })
 
-.then(() => store.get('alarmId')).then(isset => {
+.then(() => store.get('eveningAlarm')).then(isset => {
 
-	if (!isset) return store.save('alarmId', data.misc.alarmId);
+	if (!isset) return store.save('eveningAlarm', data.misc.alarms.evening);
 
-	else data.misc.alarmId = isset;
+	else data.misc.alarms.evening = isset;
 })
 
 .then(() => store.get('colorScheme')).then(isset => {

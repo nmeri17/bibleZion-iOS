@@ -14,6 +14,10 @@ import RNCalendarEvents from 'react-native-calendar-events';
 
 import Toast from 'rn-toaster';
 
+import { GoogleSignin, GoogleSigninButton } from 'react-native-google-signin';
+
+import GDrive from "react-native-google-drive-api-wrapper";
+
 
 export default class SettingsScreen extends React.Component {
 
@@ -22,36 +26,40 @@ export default class SettingsScreen extends React.Component {
 
 		var {navigation: {state: {params}}} = props;
 
-		this.state = { alarmTime: '00:00', alarmActive:false, selectedTheme: 0, selectedSize: 0,
+		this.state = { selectedTheme: 0, selectedSize: 0, contentHeader: params.contentHeader
 
-			// read component styling from here instead since its altered after compnent mount
-			globalStyles: params.bodyStyles, alarmId: 0, contentHeader: params.contentHeader
+			// read component styling from here instead since its altered after component mount
+			globalStyles: params.bodyStyles, alarmContext: null, isSigninInProgress: true
 		};
 	}
 
 	  static defaultProps = {
 
-		themeOptions: [ {name: 'White on blue', fg: '#fff', bg: '#195ea1'}, {name: 'Red on white', fg: '#e01', bg: '#fff'} ],
+		themeOptions: [ {name: 'White on blue', fg: '#fff', bg: '#195ea1'}, {name: 'Red on white', fg: '#e01', bg: '#fff'},
+			{name: 'Brown on black', fg: '#A5887E', bg: '#000'}
+		],
 
 		sizeOptions: [ {name: 'Large', value: 30}, {name: 'Normal', value: 20}, {name: 'Small', value: 15}],
 
 		alarmOutput: Platform.select({
-			ios: <TimePicker
+			ios: (predefH, predefM, alCtx) => <TimePicker
 				
-				selectedHour={8}
-				selectedMinute={30}
-				minuteInterval={5}
-				onValueChange={ (hour,minute) => this.setAlarm(hour,minute)} />,
-			android: async function () {
-				var {action, minute, hour} = await TimePickerAndroid.open({ hour: 8, minute: 30, is24Hour: true});
+				selectedHour={predefH} selectedMinute={predefM} minuteInterval={5}
+
+				onValueChange={ (hour,minute) => this.setAlarm(hour,minute, null, alCtx)} />,
+
+			android: async function (predefH, predefM, alCtx) {
+				var {action, minute, hour} = await TimePickerAndroid.open({ hour: predefH, minute: predefM, is24Hour: true});
       
-				if (action === TimePickerAndroid.timeSetAction) this.setAlarm(hour, minute);
+				if (action === TimePickerAndroid.timeSetAction) this.setAlarm(hour, minute, null, alCtx);
 			}
 		}),
 
 		headerOptions: [{backgroundColor: '#195ea1', color: '#18e9af'}, {backgroundColor: '#eee', color: '#e01',
 
 			paddingVertical:6, paddingHorizontal: 10}],
+
+		alarmNames: ['morning', 'afternoon', 'evening'],
 	}
 
 	static navigationOptions = ({ navigation }) => {
@@ -66,9 +74,9 @@ export default class SettingsScreen extends React.Component {
 	componentDidMount() {
 		var that = this;
 
-		DBProps(({misc: {alarmActive,alarmId,alarmTime}}) =>{
+		DBProps(({misc: {alarms: {morning, afternoon, evening}}}) =>{
 
-			that.setState({alarmTime: alarmTime, alarmActive: alarmActive, alarmId: alarmId},
+			that.setState({{morningAlarm: morning, afternoonAlarm: afternoon, eveningAlarm: evening}},
 
 				() => that.getUpdatedProps()
 			)
@@ -83,14 +91,42 @@ export default class SettingsScreen extends React.Component {
 
 	render () {
 
-		var {globalStyles, contentHeader, alarmActive, selectedTheme, selectedSize, alarmTime} = this.state,
+		var {globalStyles, contentHeader, morningAlarm, afternoonAlarm, eveningAlarm, /*selectedTheme, */selectedSize, alarmTime} = this.state,
 
-		{themeOptions, alarmOutput} = this.props, catContainer = {flexDirection: 'row', flexWrap: 'wrap'},
+		{/*themeOptions,*/ alarmOutput, alarmNames} = this.props, catContainer = {flexDirection: 'row', flexWrap: 'wrap'},
 
 		catStyles = {color: globalStyles.color, width: '100%'},
 
+		alarmTempl = alObj => {
+
+			if (alObj) return 
+				(<View style={[catContainer, {justifyContent: 'space-between',flex:1}]}>
+
+					<View style={{flex: 5}}>
+						<TouchableOpacity onPress={() =>(alarmOutput.bind(this))(alObj.alarmTime, alObj.index)}
+							style={{flex:2, marginBottom:5}}
+						>
+							<Text style={[catStyles, { left: 5}]}>{alObj.name} Reminder</Text>
+						</TouchableOpacity>
+
+						<Text style={[{flex:1, opacity: .5, left: 5}, catStyles]}>{alObj.alarmTime}</Text>
+					</View>
+
+					<Button title='cancel' disabled={!alObj.alarmActive} onPress={() => this.alarmToggleHandler(alObj.index)}
+						style={{flex: 1}}/>
+				</View>)
+		},
+
+		alarmData = [morningAlarm, afternoonAlarm, eveningAlarm].map((pv, h) => {
+			if (pv) {
+				pv.name = alarmNames[h]; pv.index = h;
+
+				return pv;
+			}
+		}),
+
 		themeSection = [
-			(
+			/*(
 				<View style={catContainer}>
 					<Text style={[catStyles, { left: 5}]}>Skin</Text>
 					<Picker mode='dropdown' selectedValue={selectedTheme}
@@ -101,7 +137,7 @@ export default class SettingsScreen extends React.Component {
 					</Picker>
 				</View>
 			),
-			(
+			*/(
 				<View style={catContainer}>
 					<Text style={[catStyles, { left: 5}]}>Text size</Text>
 					
@@ -118,31 +154,17 @@ export default class SettingsScreen extends React.Component {
 			)
 		],
 		externalSection = [
-			(
-				<View ref='alarmRow' style={[catContainer, {justifyContent: 'space-between',flex:1}]}>
-					<View style={{flex: 5}}>
-						<TouchableOpacity onPress={() =>(alarmOutput.bind(this))()}
-							style={{flex:2, marginBottom:5}}
-						>
-							<Text style={[catStyles, { left: 5}]}>Reminder time</Text>
-						</TouchableOpacity>
-
-						<Text style={[{flex:1, opacity: .5, left: 5}, catStyles]}>{alarmTime}</Text>
-					</View>
-					<Button title='cancel' disabled={!alarmActive} onPress={() => this.alarmToggleHandler}
-						style={{flex: 1}}/>
-				</View>
-			),
+			...alarmData.map( alarmTempl),
 			(
 				<View style={catContainer}>
 					<Text style={[catStyles, { left: 5}]}>Synchronize</Text>
-					<Picker 
-						children={['Google Drive', 'DropBox', 'One Drive'].map((el,i) =>
-							<Picker.Item label={el} value={i} key={i} style={styles.pickerItem} />
-						)}
-						mode='dropdown' style={catStyles}
-						>
-					</Picker>
+					
+					<GoogleSigninButton style={{ width: 48, height: 48 }} size={GoogleSigninButton.Size.Wide}
+    				
+	    				color={GoogleSigninButton.Color.Light} onPress={this.gSignIn}
+	    				
+	    				disabled={this.state.isSigninInProgress}
+	    			/>
 				</View>
 			),
 		];
@@ -201,36 +223,33 @@ export default class SettingsScreen extends React.Component {
 		}).catch(e => console.error(e));
 	}
 
-	setAlarm(hour, min, inactive) {
+	setAlarm(hour, min, inactive, alCtx) {
 		var time = `${hour}:${min}`, bool = !inactive, // if undefined or null, enable alarm
 
-		that = this;
+		that = this, ctx = this.props.alarmNames[alCtx];
 
 		// capture datepicker input and store that as time
-		store.save('alarmTime', time).then( () =>
+		store.save(ctx,
 
-			store.save('alarmActive', bool).then( () =>
+			{'alarmTime': time, 'alarmActive': bool, 'alarmId': that.state[ctx+'Alarm'].alarmId})
+		.then( () =>
+			RNCalendarEvents.authorizationStatus().then(status => {
 
-				store.save('alarmId', that.state.alarmId).then( () =>
+				if (status != 'authorized' && Platform.OS == 'android') RNCalendarEvents.authorizeEventStore()
 
-					RNCalendarEvents.authorizationStatus().then(status => {
+					.then(status => this.alarmAuthorized({status:status, time:time, bool:bool, ind: alCtx}))
 
-						if (status != 'authorized' && Platform.OS == 'android') RNCalendarEvents.authorizeEventStore()
+					.catch(err => that.postAlarmAction(err));
 
-							.then(status => this.alarmAuthorized(status, {time:time, bool:bool}))
+				else this.alarmAuthorized({status:status, time:time, bool:bool, ind: alCtx});
 
-							.catch(err => that.postAlarmAction(err));
-
-						else this.alarmAuthorized(status, {time:time, bool:bool});
-
-					}).catch(err => that.postAlarmAction(err))
-				)
-			)
+			}).catch(err => that.postAlarmAction(err))
 		);
 	}
 
 	postAlarmAction (err) {
-		var that = this;console.log(err)
+		var that = this;
+
 		that._toast.show({
 			position: Toast.constants.gravity.top,
   			duration: 50,
@@ -246,13 +265,13 @@ export default class SettingsScreen extends React.Component {
 		});
 	}
 
-	alarmToggleHandler () {
+	alarmToggleHandler (alCtx) {
 		var [hour, mins] = this.state.alarmTime.split(':');
 
-		this.setAlarm(hour, mins,1);
+		this.setAlarm(hour, mins,1,alCtx); // disable alarm
 	}
 
-	getUpdatedProps () {
+	async getUpdatedProps () {
  
 		var {themeOptions, sizeOptions, headerOptions, navigation} = this.props, {globalStyles, titleBar, contentHeader} = this.state,
 
@@ -271,57 +290,117 @@ export default class SettingsScreen extends React.Component {
 
 		selectedSize = selectedSize !== void(4) ? selectedSize.value: selectedSize;
 
+		const isSignedIn = await GoogleSignin.isSignedIn();
+
 		this.setState({selectedTheme: selectedTheme, selectedSize: selectedSize,
 
-			contentHeader: headerTheme
-		}, () => {
-			// prevent run on init page load
-			if (globalStyles.__lookupSetter__('color') === void(0)) {
-				// take us back to menu so header bar can refresh
-				navigation.push('menu',{bodyStyles: globalStyles, contentHeader: contentHeader,
-
-					dbRefresh: navigation.getParam('dbRefresh')
-				});
-			}
+			contentHeader: headerTheme, isSigninInProgress: !isSignedIn
 		});
 	}
 
-	alarmAuthorized (status, {time, bool}) {
+	alarmAuthorized ({status, time, bool, ind}) {
 
 		if (status == 'authorized' || Platform.OS == 'ios') {
-			var titleStr  = 'Bible Zion Memorization', evtId = 'activate-memo',
 
+			var {alarmNames}= this.props, ctx = alarmNames[ind], evtId = 'activate-memo'+ind,
+
+			titleStr  = 'EMAW BVM ' + ctx + 'alarm',
+
+			// 2:10 to 02:10
 			timeFormat = time.split(':').map(x => x.length < 2 ? 0+x: x), h = new Date();
 
 			// create new calendar entry
-			if (bool) return RNCalendarEvents.saveEvent(titleStr, {
+			if (bool) return RNCalendarEvents.saveEvent(titleStr, {id: evtId,
 
 				title: titleStr,
 
-				recurrenceRule: {frequency : 'daily', occurrence: 365, 
+				recurrenceRule: {
 
-				endDate: new Date((h.getFullYear()+1) + '-' + (h.getMonth()+1) + '-' + h.getDate()).toISOString(),interval: 2},
+					frequency : 'daily', occurrence: 1, interval: 2,
+
+					endDate: new Date((h.getFullYear()+1) + '-' + (h.getMonth()+1) + '-' + h.getDate()).toISOString(),
+				},
 
 				startDate: new Date(new Date().setHours(...timeFormat)).toISOString(),
 
-				description: 'Have you memorized a verse today?',
+				description: 'Have you memorized a verse this ' + ctx+'?',
 
 				alarms: [{
-					date: 1 // relative offset (in minutes) from the start date
+					date: 1 // relative offset from the start date
 				}]
 			})
 
-			.then(id =>
-				this.setState( {alarmTime: timeFormat.join(':'), alarmActive: bool, alarmId: id},
+			.then(id => {console.log(id)
+				this.setState( {this.state[ctx+'Alarm']: {alarmTime: timeFormat.join(':'), alarmActive: bool, alarmId: ind}, alarmContext: ind},
 
-				this.postAlarmAction('added reminder'))
-			);
+				this.postAlarmAction('Added reminder'))
+			});
 
 			// remove event
-			return RNCalendarEvents.removeEvent(this.state.alarmId)
+			return RNCalendarEvents.removeEvent(evtId)
 
-			.then(() => this.setState( {alarmActive: bool}, this.postAlarmAction('removed reminder')));
+			.then(() => {
+				var old = this.state[ctx+'Alarm']; Object.assign(old, {alarmActive: bool});
+
+				this.setState( old, this.postAlarmAction('removed reminder'))});
 		}
+	}
+
+	async gSignIn () {
+
+		GoogleSignin.configure({
+		  scopes: ['https://www.googleapis.com/auth/drive.file'],
+		  webClientId: '102492523207563707116', // client ID of type WEB (needed to verify user ID and offline access)
+		  offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
+		  hostedDomain: '', // specifies a hosted domain restriction
+		  loginHint: '', // [iOS] The user's ID, or email address, to be prefilled in the authentication UI if possible. [See docs here](https://developers.google.com/identity/sign-in/ios/api/interface_g_i_d_sign_in.html#a0a68c7504c31ab0b728432565f6e33fd)
+		  forceConsentPrompt: true, // [Android] if you want to show the authorization prompt at each login.
+		  accountName: '', // [Android] specifies an account name on the device that should be used
+		});
+
+		try {
+		    try {
+		    	await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+			    this.setState({ isSigninInProgress: false });
+
+			    const userInfo = await GoogleSignin.signIn();
+
+			    this.postAlarmAction('Success! Synchronizing...');
+
+
+			    GDrive.setAccessToken(userInfo.accessToken);
+
+			    GDrive.init();
+
+			    store.get('AllFolders').then(function (arr) {
+
+				    arr.forEach(r => GDrive.files.safeCreateFolder({
+						
+							name: r.folderName, parents: ["root"]
+						}).then(folderId => r.verses.forEach(vr =>
+
+							GDrive.files.createFileMultipart(
+								// use r.folderName if this doesnt work
+								vr.text, ".txt", { name: vr.quotation, parents: ["root", folderId]
+							 
+							}))
+						)
+					)
+				})
+			}
+
+		    catch (error) {
+		    	this.postAlarmAction('Google play services are unavailable');
+
+				this.setState({ isSigninInProgress: true });
+			}
+		}
+		catch (error) {
+				this.postAlarmAction(error.code);
+
+				this.setState({ isSigninInProgress: true });
+			}
 	}
 }
 

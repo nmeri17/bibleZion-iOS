@@ -90,8 +90,11 @@ export default class FolderComp extends React.Component {
 		var {globalStyles, contentHeader} = this.state;
 
 		return [
+			// 0: create folder
 			<View style={styles.modalStyles}>
-				<TextInput ref='newFolderInput' placeholder='Folder name' underlineColorAndroid='green' />
+				<TextInput ref='newFolderInput' placeholder='Folder name' underlineColorAndroid={globalStyles.color}
+
+					autoCapitalize={true} maxLength={15} style={{color: globalStyles.color}} />
 
 				<TouchableOpacity onPress={() => this.folderSave()}
 
@@ -100,6 +103,7 @@ export default class FolderComp extends React.Component {
 	    		</TouchableOpacity>
 			</View>,
 
+			// 1: test success
 			<View style={[styles.modalStyles, {marginTop: 150, minHeight: 150}]}>
 				<Text style={{color: contentHeader.color, marginBottom: 20}}>Success! you remembered everything!</Text>
 					
@@ -112,6 +116,7 @@ export default class FolderComp extends React.Component {
 	    		</TouchableOpacity>
 			</View>,
 			
+			// 2: test corrections
 			<View style={[styles.modalStyles, {marginTop: 150, minHeight: 250}]}>
 				<Text style={{color: contentHeader.color}}>Correct text</Text>
 				<ScrollView>
@@ -132,6 +137,7 @@ export default class FolderComp extends React.Component {
 	    		</TouchableOpacity>
 			</View>,
 
+			// 3: folders right headerMenu
 			<View style={styles.headerMenu}>
 
 				<Text onPress={() => this.closeModal(0)} style={{color: contentHeader.color}}>Rename</Text>
@@ -139,9 +145,13 @@ export default class FolderComp extends React.Component {
 				<Text onPress={() => this.closeModal(1)} style={{color: contentHeader.color}}>Delete all</Text>
 			</View>,
 
+			// 4: folder rename
 			<View style={styles.modalStyles}>
 
-				<TextInput ref='renameFolderInput' placeholder='New name' underlineColorAndroid='green' />
+				<TextInput ref='renameFolderInput' placeholder='New name' underlineColorAndroid={globalStyles.color}
+
+					autoCapitalize={true} maxLength={15} style={{color: globalStyles.color}}
+				/>
 
 			{/* `folderRename` lived on its component (called through modal close). but we don't want
 				that handler to run on back press
@@ -155,6 +165,7 @@ export default class FolderComp extends React.Component {
 	    		</TouchableOpacity>
 			</View>,
 
+			// 5: delete all folders
 			<View style={styles.modalStyles}>
 				<Text>Sure to delete all documents?</Text>
 
@@ -164,6 +175,34 @@ export default class FolderComp extends React.Component {
 	    			
 	    			<Text style={{color:globalStyles.backgroundColor}}>Reset</Text>
 	    		</TouchableOpacity>
+			</View>,
+
+			// 6: edit verse contents
+			<View style={styles.modalStyles}>				
+
+				<TextInput multiline={true} style={{height: 60}} placeholder='New Reading' ref='vsUpdBox'
+
+	    			style={{color: globalStyles.color}} autoCapitalize={true} autoCorrect={true}
+
+	    			placeholderTextColor={globalStyles.color} defaultValue={this.props.clickPath}
+
+	    			selectTextOnFocus={true}
+	    		/>
+
+				<TouchableOpacity onPress={() => this.updateVerse(this.refs.vsUpdBox._lastNativeText)}
+
+	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+	    			
+	    			<Text style={{color:globalStyles.backgroundColor}}>Update</Text>
+	    		</TouchableOpacity>
+			</View>,
+
+			// 7: verses right headerMenu
+			<View style={styles.headerMenu}>
+
+				<Text onPress={() => this.closeModal(0)} style={{color: contentHeader.color}}>Edit</Text>/*
+				
+				<Text onPress={() => this.closeModal(1)} style={{color: contentHeader.color}}>Delete</Text>*/
 			</View>
 		];
 	}
@@ -171,7 +210,7 @@ export default class FolderComp extends React.Component {
 	folderSave () {
 		var name = this.refs.newFolderInput._lastNativeText, that = this;
 
-		if (name) // folders schema. 'verses' holds objects with the signature {quotation: '', text:''}
+		if (name)
 		store.get('AllFolders').then(items => {
 
 			var noDup = items.every(m => m.folderName != name);
@@ -201,16 +240,7 @@ export default class FolderComp extends React.Component {
     		if (folderIndx !== -1) items[folderIndx][key] = newName;
 
     		else {
-    			folderIndx = items.findIndex(obj => {
-
-    				// assuming it's impossible to have identical verse names at the same index
-    				// but in separate dirs
-    				itemIndx = obj.verses.findIndex(vObj => vObj[key] == displayName);
-
-    				return itemIndx !== -1;
-    			});
-
-    			items[folderIndx].verses[itemIndx][key] = newName;
+    			console.log(items)
     		}
 
 			store.save('AllFolders', items).then(() => that._toast.show({
@@ -231,6 +261,32 @@ export default class FolderComp extends React.Component {
 			children: "Deleted all documents",
 			animationEnd: () => that.closeModal()
 		}))
+	}
+
+	updateVerse () {
+		var {clickPath: {key,displayName}} = this.props, newCont = this.refs.vsUpdBox._lastNativeText,
+
+		that = this, folderIndx, itemIndx;
+
+		if (newCont) store.get('AllFolders').then(items => {
+    		
+    		// get the verse index
+    		folderIndx = items.findIndex(obj => {
+
+				itemIndx = obj.verses.findIndex(vObj => vObj[key] == displayName);
+
+				return itemIndx !== -1;
+			});
+
+			items[folderIndx].verses[itemIndx][key] = newCont;
+
+			store.save('AllFolders', items).then(() => that._toast.show({
+				position: Toast.constants.gravity.top,
+      			duration: 50,
+				children: "Edit successful",
+				animationEnd: () => that.closeModal()
+			}))
+		});
 	}
 }
 

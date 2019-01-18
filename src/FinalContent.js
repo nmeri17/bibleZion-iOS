@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 
-import { Text, TextInput, View, StyleSheet, SectionList, TouchableOpacity} from 'react-native';
+import { Text, TextInput, View, StyleSheet, SectionList, TouchableOpacity, ImageBackground, } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -22,14 +22,10 @@ export default class FinalContent extends React.Component {
 
 		this.state = {modalChild: null, res2: null, res1: null, globalStyles: params.bodyStyles,
 
-			titleBar: params.titleBar, contentHeader: params.contentHeader, childCloseToggle: null
+			titleBar: params.titleBar, contentHeader: params.contentHeader, childCloseToggle: null,
+
+			displayMemo: 0,
 		};
-	}
-
-	static defaultProps = {
-	  screenMap: {folders: 'folderName', verses: 'quotation', lastStep: true}, // screen title per `mode`
-
-	  iconsMap: {folders: 'md-folder', verses: 'md-paper'},
 	}
 
 	static navigationOptions = ({ navigation }) => {
@@ -51,7 +47,7 @@ export default class FinalContent extends React.Component {
     }
 
 	render() {
-		var {globalStyles, contentHeader, titleBar, modalChild} = this.state,
+		var {globalStyles, contentHeader, titleBar, modalChild, displayMemo} = this.state,
 
 		{navigation: {state: {params}}} = this.props, that = this, {backgroundColor, color, fontSize} = globalStyles;
 
@@ -70,7 +66,13 @@ export default class FinalContent extends React.Component {
 
 				<View>
 					<Text style={[contentHeader, {fontSize: fontSize}]}>Reading</Text>
-					<TextInput multiline={true} style={[styles.testBox, fzContent]} placeholder='Type here' ref='testBox'/>
+
+					<TextInput multiline={true} style={[styles.testBox, fzContent]} placeholder='Type here' ref='testBox'
+
+		    			style={{color: globalStyles.color}} autoCapitalize={true} autoCorrect={true}
+
+		    			placeholderTextColor={globalStyles.color}
+		    		/>
 					
 					<TouchableOpacity onPress={() => {
 						var userInput = that.refs.testBox._lastNativeText;
@@ -89,21 +91,28 @@ export default class FinalContent extends React.Component {
 		else {
 			// load all screens for swiping through
 			var allScreens = params.target.map((obj,n) => 
-				(<View><SectionList
-					renderItem={({item, index, separators}) => item}
-  
-  					renderSectionHeader={({section: {title}}) => (
-    			
-    					<Text style={[contentHeader, {fontSize: fontSize}]}>{title}</Text>
-  					)}
+				(<ImageBackground source={require('../assets/IMG-20181130-WA0006.jpg')} style={styles.parchment}>
+					<View>
+						<SectionList
+							renderItem={({item, index, separators}) => item}
+		  
+		  					renderSectionHeader={({section: {title}}) => (
+		    			
+		    					<Text style={[ {fontSize: fontSize, fontFamily: 'Times New Roman'}]}>{title}</Text>
+		  					)}
 
-  					sections={[
-						{title: 'Title', data: [<Text style={{marginBottom:10}}>{obj.quotation} </Text>]},
-						{title: 'Reading', data: [<Text style={{marginBottom:10}}>{obj.text}</Text>]},
-					]} key={n} style={[{minHeight:400, flex: 1}, globalStyles]}
+		  					sections={[
+								{title: 'Click to ' + displayMemo ? 'hide': 'show', data: [<Text style={styles.memoData}>{obj.quotation} </Text>]},
+								{title: 'Reading', data: [<Text style={[styles.memoData, {display: displayMemo ? 'flex': 'none'}]}>
 
-					keyExtractor={(item, index) => 'lastVisited:' + index}
-				/></View>)
+									{obj.text}</Text>]
+								},
+							]} key={n} style={[{minHeight:400, flex: 1}, globalStyles]}
+
+							keyExtractor={(item, index) => 'lastVisited:' + index}
+						/>
+					</View>
+				</ImageBackground>)
 			);
 
 			contextView = <IndicatorViewPager key='cv'
@@ -142,9 +151,9 @@ export default class FinalContent extends React.Component {
 		// update state to display modal
 		this.setState((state, props) => {
 
-			var noDiff = GoodToBad(userInput.trim(), target, styles.correctText),
+			var noDiff = GoodToBad(userInput.trim(), target, [styles.correctText, {fontWeight: 'bolder'}]),
 
-			noDiff2 = BadToGood(target, userInput.trim(), styles.nullText);
+			noDiff2 = BadToGood(target, userInput.trim(), [styles.nullText, {fontWeight: 'bolder'}]);
 
 			if (!noDiff) return {modalChild: 1, childCloseToggle: () => props.navigation.goBack()};
 
@@ -163,10 +172,20 @@ const styles = StyleSheet.create({
 	testBox: {
 		height: 60
 	},
-	  checkButton: {
+	checkButton: {
 	  	marginHorizontal: 5,
 	  	paddingVertical: 10,
 	  	paddingHorizontal: 5,
 	  	borderRadius: 5,
-	  },
+	},
+  parchment: {
+  	flex: 1,
+    width: null,
+    height: null,
+    resizeMode: 'cover'
+  },
+  memoData:{
+  	marginBottom:10,
+  	fontFamily: 'Times New Roman'
+  }
 });

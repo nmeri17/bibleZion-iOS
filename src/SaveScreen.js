@@ -53,9 +53,17 @@ export default class SaveScreen extends React.Component {
 		var {allFolders, globalStyles} = this.state,
 
 		saveCriteria = [// represents fields that make up a new folder
-    		<TextInput ref='quotation' placeholder='New Bible quotation' underlineColorAndroid='green' />,
+    		<TextInput ref='quotation' placeholder='New Bible quotation' underlineColorAndroid={globalStyles.color}
 
-    		<TextInput ref='text' placeholder='verse text' underlineColorAndroid='green' />, 
+    			style={{color: globalStyles.color}} autoCapitalize={true} autoCorrect={true}
+
+    			placeholderTextColor={globalStyles.color} />,
+
+    		<TextInput ref='text' placeholder='verse text' underlineColorAndroid={globalStyles.color} multiline={true}
+
+    			style={{color: globalStyles.color}} autoCapitalize={true} autoCorrect={true}
+
+    			placeholderTextColor={globalStyles.color} />, 
 
     		(<Picker key='fldrDrp' mode='dropdown' onValueChange={(val,i) => this.selectAFolder(val,i)}
 

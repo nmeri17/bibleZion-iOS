@@ -39,7 +39,7 @@ function badToGood (needle, haystack, css) {
 		
 		if (!nullWeds.includes(eachWord)) return <Text key={o} style={styles.testText}>{eachWord}</Text>;
 
-		return <Text style={[styles.testText, css]} key={o}>{eachWord}</Text>;
+		return <Text style={[styles.testText, ...css]} key={o}>{eachWord.toUpperCase()}</Text>;
 	});
 }
 
@@ -81,7 +81,7 @@ function goodToBad (needle, haystack, css) {
 
 		if (!nullWeds.includes(eachWord)) return <Text key={o} style={styles.testText}>{eachWord}</Text>;
 
-		return <Text style={[styles.testText, css]} key={o}>{eachWord}</Text>;
+		return <Text style={[styles.testText, ...css]} key={o}>{eachWord.toUpperCase()}</Text>;
 	});
 }
 

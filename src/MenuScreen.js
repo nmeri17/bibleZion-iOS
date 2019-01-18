@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 
-import {StyleSheet, Text, View, TouchableHighlight, FlatList, ImageBackground, } from 'react-native';
+import {StyleSheet, Text, View, TouchableHighlight, FlatList, ImageBackground, Platform, } from 'react-native';
 
 import {DBProps, RelatedStyle} from './app-wide-styling';
 
@@ -18,13 +18,17 @@ export default class MenuScreen extends React.Component {
 	}
 
 	static defaultProps = {
-	   screens: [{name: 'Save verse', route:'SaveVerse',icon: 'md-save', color: '#473775'},
+	   screens: [{name: 'Save verse', route:'SaveVerse',icon: Platform.select({ios:'ios-save', android:'md-save',
+	   	color: '#A59CBF'},
 
-	   	{name: 'Memorize', route:'MemorizeVerse',icon: 'md-filing', color: '#4CAF50'},
+	   	{name: 'Memorize', route:'MemorizeVerse',icon: Platform.select({ios:'ios-filing', android:'md-filing',
+	   		color: '#4CAF50'},
 
-	   	{name: 'Test yourself', route:'TestVerse',icon: 'md-school', color: '#fb0'},
+	   	{name: 'Test yourself', route:'TestVerse',icon: Platform.select({ios:'ios-school', android:'md-school',
+	   		color: '#fb0'},
 
-	   	{name: 'Settings', route:'SettingsVerse',icon: 'md-settings', color: '#795548'}],
+	   	{name: 'Settings', route:'SettingsVerse',icon: Platform.select({ios:'ios-settings', android:'md-settings',
+	   		color: '#C391A9'}],
 	 }
 
 	static navigationOptions = {
