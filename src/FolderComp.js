@@ -16,7 +16,7 @@ export default class FolderComp extends React.Component {
 		this.state = {
 			popup: false, headerTitle: props.headerTitle, formattedComponents: props.formattedComponents,
 
-			globalStyles: props.bodyStyles, contentHeader: props.contentHeader
+			globalStyles: props.bodyStyles, contentHeader: props.contentHeader, verseText: ''
 		};
 	}
 
@@ -33,6 +33,8 @@ export default class FolderComp extends React.Component {
 	componentWillReceiveProps({modalChild, formattedComponents}) {
 
 		this.setState({popup: modalChild !== null, formattedComponents: formattedComponents});
+
+		if (modalChild === 6) this.initVerseText()
 	}
 
 	// this precedes setState callback
@@ -71,14 +73,14 @@ export default class FolderComp extends React.Component {
 					{this.modalContents()[modalChild]}
 		        </Modal>
  
-		        <Toast ref={component => (this._toast = component)} style={styles.toast}></Toast>
+		        <Toast ref={component => (this._toast = component)} style={[styles.toast, {backgroundColor: contentHeader.backgroundColor}]}></Toast>
 			</View>
 		);
 	}
 
 	closeModal (...val) {
 		this.setState({popup: false}, () => {
-		
+		console.log(this.props.onChildModalClose)
 			if (this.props.onChildModalClose !== null) {
 	
 				this.props.onChildModalClose(...val);// trigger close behaviour i.e. parent update
@@ -87,14 +89,14 @@ export default class FolderComp extends React.Component {
 	}
 
 	modalContents () {
-		var {globalStyles, contentHeader} = this.state;
+		var {globalStyles, contentHeader, verseText} = this.state;
 
 		return [
 			// 0: create folder
 			<View style={styles.modalStyles}>
 				<TextInput ref='newFolderInput' placeholder='Folder name' underlineColorAndroid={globalStyles.color}
 
-					autoCapitalize={true} maxLength={15} style={{color: globalStyles.color}} />
+					autoCapitalize='sentences' maxLength={15} style={{color: globalStyles.color}} />
 
 				<TouchableOpacity onPress={() => this.folderSave()}
 
@@ -150,7 +152,7 @@ export default class FolderComp extends React.Component {
 
 				<TextInput ref='renameFolderInput' placeholder='New name' underlineColorAndroid={globalStyles.color}
 
-					autoCapitalize={true} maxLength={15} style={{color: globalStyles.color}}
+					autoCapitalize='sentences' maxLength={15} style={{color: globalStyles.color}}
 				/>
 
 			{/* `folderRename` lived on its component (called through modal close). but we don't want
@@ -178,15 +180,15 @@ export default class FolderComp extends React.Component {
 			</View>,
 
 			// 6: edit verse contents
-			<View style={styles.modalStyles}>				
+			<View style={[styles.modalStyles, {marginTop: 150}]}>				
 
 				<TextInput multiline={true} style={{height: 60}} placeholder='New Reading' ref='vsUpdBox'
 
-	    			style={{color: globalStyles.color}} autoCapitalize={true} autoCorrect={true}
+	    			style={{color: globalStyles.color}} autoCapitalize='sentences' autoCorrect={true}
 
-	    			placeholderTextColor={globalStyles.color} defaultValue={this.props.clickPath}
+	    			placeholderTextColor={globalStyles.color} selectTextOnFocus={true}
 
-	    			selectTextOnFocus={true}
+	    			defaultValue={verseText}
 	    		/>
 
 				<TouchableOpacity onPress={() => this.updateVerse(this.refs.vsUpdBox._lastNativeText)}
@@ -200,9 +202,9 @@ export default class FolderComp extends React.Component {
 			// 7: verses right headerMenu
 			<View style={styles.headerMenu}>
 
-				<Text onPress={() => this.closeModal(0)} style={{color: contentHeader.color}}>Edit</Text>/*
+				<Text onPress={() => this.closeModal(0)} style={{color: contentHeader.color}}>Edit</Text>
 				
-				<Text onPress={() => this.closeModal(1)} style={{color: contentHeader.color}}>Delete</Text>*/
+				{/*<Text onPress={() => this.closeModal(1)} style={{color: contentHeader.color}}>Delete</Text>*/}
 			</View>
 		];
 	}
@@ -278,7 +280,7 @@ export default class FolderComp extends React.Component {
 				return itemIndx !== -1;
 			});
 
-			items[folderIndx].verses[itemIndx][key] = newCont;
+			items[folderIndx].verses[itemIndx].text = newCont;
 
 			store.save('AllFolders', items).then(() => that._toast.show({
 				position: Toast.constants.gravity.top,
@@ -286,6 +288,23 @@ export default class FolderComp extends React.Component {
 				children: "Edit successful",
 				animationEnd: () => that.closeModal()
 			}))
+		});
+	}
+
+	initVerseText () {
+		var that = this;
+
+		store.get('AllFolders').then(items => {
+    		
+    		// get the verse index
+    		folderIndx = items.findIndex(obj => {
+
+				itemIndx = obj.verses.findIndex(vObj => vObj[this.props.clickPath.key] == this.props.clickPath.displayName);
+
+				return itemIndx !== -1;
+			});
+
+			that.setState({verseText: items[folderIndx].verses[itemIndx].text})
 		});
 	}
 }

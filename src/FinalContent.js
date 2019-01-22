@@ -24,7 +24,7 @@ export default class FinalContent extends React.Component {
 
 			titleBar: params.titleBar, contentHeader: params.contentHeader, childCloseToggle: null,
 
-			displayMemo: 0,
+			displayMemo: false,
 		};
 	}
 
@@ -62,14 +62,14 @@ export default class FinalContent extends React.Component {
 				
 				<Text style={[contentHeader, {fontSize: fontSize}]}>Title</Text>
 				
-				<Text style={[fzContent, {marginBottom: 15, left: 15}]}>{targetObj.quotation}</Text>
+				<Text style={[fzContent, {marginBottom: 15, left: 5, color: globalStyles.color}]}>{targetObj.quotation}</Text>
 
 				<View>
 					<Text style={[contentHeader, {fontSize: fontSize}]}>Reading</Text>
 
 					<TextInput multiline={true} style={[styles.testBox, fzContent]} placeholder='Type here' ref='testBox'
 
-		    			style={{color: globalStyles.color}} autoCapitalize={true} autoCorrect={true}
+		    			style={{color: globalStyles.color}} autoCapitalize='sentences' autoCorrect={true}
 
 		    			placeholderTextColor={globalStyles.color}
 		    		/>
@@ -91,9 +91,9 @@ export default class FinalContent extends React.Component {
 		else {
 			// load all screens for swiping through
 			var allScreens = params.target.map((obj,n) => 
-				(<ImageBackground source={require('../assets/IMG-20181130-WA0006.jpg')} style={styles.parchment}>
-					<View>
-						<SectionList
+				(<View>
+					<ImageBackground source={require('../assets/IMG-20181130-WA0006.jpg')} style={styles.parchment}>
+						<View><SectionList
 							renderItem={({item, index, separators}) => item}
 		  
 		  					renderSectionHeader={({section: {title}}) => (
@@ -102,29 +102,37 @@ export default class FinalContent extends React.Component {
 		  					)}
 
 		  					sections={[
-								{title: 'Click to ' + displayMemo ? 'hide': 'show', data: [<Text style={styles.memoData}>{obj.quotation} </Text>]},
+								{title: 'Quotation', data: [
+
+									<Text style={styles.memoData}
+
+										onPress={() => that.setState({displayMemo: !displayMemo})}
+									>
+										{ !displayMemo ? 'Click to show ' + obj.quotation: 'Hide ' + obj.quotation}
+
+									</Text>
+								]},
 								{title: 'Reading', data: [<Text style={[styles.memoData, {display: displayMemo ? 'flex': 'none'}]}>
 
 									{obj.text}</Text>]
 								},
-							]} key={n} style={[{minHeight:400, flex: 1}, globalStyles]}
+							]} key={n} style={[{minHeight:400, flex: 1}, globalStyles, {backgroundColor: 'transparent'}]}
 
 							keyExtractor={(item, index) => 'lastVisited:' + index}
-						/>
-					</View>
-				</ImageBackground>)
+						/></View>
+					</ImageBackground>
+				</View>)
 			);
 
 			contextView = <IndicatorViewPager key='cv'
 				initialPage={params.itemIndx}
 				indicator={<PagerDotIndicator pageCount={allScreens.length-1}
 
-					dotStyle={{backgroundColor: '#000'}}
+					dotStyle={{backgroundColor: '#fff'}}
 					
 					selectedDotStyle={{backgroundColor: color}}
 				/>}
-				style={{minHeight:200,flex:1, paddingTop:20, backgroundColor: backgroundColor,
-					paddingHorizontal: 15}}
+				style={{minHeight:200,flex:1}}
 			>
 				{allScreens}
 			</IndicatorViewPager>;
@@ -182,10 +190,12 @@ const styles = StyleSheet.create({
   	flex: 1,
     width: null,
     height: null,
-    resizeMode: 'cover'
+    resizeMode: 'cover',
+    paddingTop:20,
+    paddingHorizontal: 15
   },
   memoData:{
   	marginBottom:10,
-  	fontFamily: 'Times New Roman'
+  	fontFamily: 'Times New Roman',
   }
 });

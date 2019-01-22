@@ -23,20 +23,24 @@ fh = [{
 	},
   {
 	headerStyle: {
-      backgroundColor: '#333',
+      backgroundColor: '#A5887E',
     },
-    headerTintColor: '#A5887E'
+    headerTintColor: '#333'
 	}
 ],
 
 // header styles
-th = [{backgroundColor: '#195ea1', color: '#18e9af'}, {backgroundColor: '#eee', color: '#e01',
+th = [
+		{backgroundColor: '#195ea1', color: '#18e9af'},
 
-	paddingVertical:6, paddingHorizontal: 10}, {backgroundColor: '#333', color: '#A5887E'}],
+		{backgroundColor: '#eee', color: '#e01', paddingVertical:6, paddingHorizontal: 10},
+
+		{backgroundColor: '#000', color: '#8a4e39', fontWeight: '300'}
+	],
 
 
 getRelatedStyle = (appWideStyles, mode) => {
-	var ctx = [fh, th][mode],
+	var ctx = [fh, th][mode], res,
 
 	fhCb = ({headerStyle: {backgroundColor}, headerTintColor}) =>
 
@@ -47,18 +51,20 @@ getRelatedStyle = (appWideStyles, mode) => {
 
 	cbCtx = [fhCb, thCb][mode];
 
-	return ctx.find(cbCtx);
+	res = ctx.find(cbCtx);
+
+	if (res) return res;
 }
 
 data= {misc: 
 
-		alarms: {
+		{alarms: {
 
 			morning: {alarmId: 1, alarmTime: '08:30', alarmActive: false},
 
 			afternoon: {alarmId: 2, alarmTime: '01:15', alarmActive: false},
 
-			evening: {alarmId: 3, alarmTime: '07:30', alarmActive: false},
+			evening: {alarmId: 3, alarmTime: '07:30', alarmActive: false}}
 		},
 
 		appWideStyles: {},

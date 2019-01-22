@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 
-import { Text, TextInput, View, StyleSheet, FlatList, } from 'react-native';
+import { Text, TextInput, View, StyleSheet, FlatList, Platform, } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -20,16 +20,19 @@ export default class MemorizeScreen extends React.Component {
 
 			globalStyles: params.bodyStyles, titleBar: params.titleBar, contentHeader: params.contentHeader,
 
-			childCloseToggle: null, headerMenuIndx: null, headerMenuCtx:{}
+			childCloseToggle: null, headerMenuIndx: null, // infers who was clicked in the current context
+
+			headerMenuCtx:{}
 		};
 	}
 
 	static defaultProps = {
 	  screenMap: {folders: 'folderName', verses: 'quotation', lastStep: true}, // screen title per `mode`
 
-	  iconsMap: {folders: 'md-folder', verses: 'md-paper'},
+	  iconsMap: {folders: Platform.select({ios:'ios-folder', android: 'md-folder'}), verses: Platform.select({ios:'ios-bookmark', android:'md-bookmark'})},
 	}
 
+	// show right header only when not on test screen
 	static navigationOptions = ({ navigation} ) => {
 
 		var titleBar = navigation.state.params.titleBar, headerRightHndlr = navigation.getParam('headerRightHndlr'),
@@ -41,7 +44,7 @@ export default class MemorizeScreen extends React.Component {
 		if (navigation.state.routeName === 'MemorizeVerse' || isTest) {
 
 			return headerRightHndlr === void(0) || isTest ? noRightHeader: (() => {
-				titleBar.headerRight = <Icon name='md-more'
+				titleBar.headerRight = <Icon name={Platform.select({ios:'ios-more', android: 'md-more'})}
 
 		            style={{color: navigation.getParam('headerRightColor'), fontSize:35, /*right: 10,*/ width:30}}
 		          
@@ -62,12 +65,13 @@ export default class MemorizeScreen extends React.Component {
 
 		// mutate over folders, if any
   		// this runs async
-		if (!headerRightHndlr && !target) that.props.navigation.setParams({
+		if (!headerRightHndlr) that.props.navigation.setParams({
 			headerRightHndlr: function() {
 
 	    		if (that.state.displayData.props.data.length > 1) that.setState({childCloseToggle: (ind) =>
 
-	    			that.headerMenuClose(ind), modalChild: 3})
+	    			// ind of clicked menu item
+	    			that.headerMenuClose(ind), modalChild: !target ? 3: 7})
 	    	},
 
 	    	headerRightColor: titleBar.headerTintColor
@@ -91,12 +95,12 @@ export default class MemorizeScreen extends React.Component {
     }
 
 	render() {
-		var {globalStyles, contentHeader, titleBar, modalChild, headerMenuCtx, displayData} = this.state,
+		var {globalStyles, contentHeader, titleBar, modalChild, headerMenuCtx, displayData, oVsTxt} = this.state,
 
 		{navigation: {state: {params}}} = this.props;
 
 		if (displayData) {
-			return <FolderComp formattedComponents={displayData}
+			return <FolderComp formattedComponents={displayData} oldVerseTxt={oVsTxt}
 
 				modalChild={modalChild} bodyStyles={globalStyles} contentHeader={contentHeader}
 
@@ -130,13 +134,13 @@ export default class MemorizeScreen extends React.Component {
 
 		addButton = <Icon style={[styles.folders, styles.dataColumn, {color:globalStyles.color}]}
 
-			key='add new' name='md-add-circle'
+			key='add new' name={Platform.select({ios:'ios-add-circle', android: 'md-add-circle'})}
 			
 			onPress={() => this.newFolderButton()}
 		/>,
 
 		includeAddButton = (() => {
-			if (!isTest && lastVisited == possibleModes[0]) {
+			if (!isTest && lastVisited == possibleModes[0] && headerMenuIndx === null || headerMenuIndx === void(0)) {
 
 				data.unshift(addButton);
 
@@ -147,12 +151,10 @@ export default class MemorizeScreen extends React.Component {
 
 		testNoFolder = <View style={{flexDirection: 'row'}}>
 
-			<Text style={{marginLeft: 10, color: globalStyles.color}} onPress={() => navigation.navigate('MemorizeVerse',
+			<Text style={{marginLeft: 10, color: globalStyles.color, marginVertical: 50}} onPress={() => navigation.navigate('MemorizeVerse',
 
 				{titleBar: params.titleBar, bodyStyles: globalStyles, contentHeader: contentHeader})}
 			>Create a folder to begin</Text>
-
-			<Icon name='md-rocket' size={15} style={{color: globalStyles.color, marginLeft: 10}} />
 		</View>;
 
         if (!data.length ) {
@@ -160,7 +162,7 @@ export default class MemorizeScreen extends React.Component {
 
         		{lastVisited == 'verses'
 
-    				? <Text key='mtfldr'>empty folder</Text>
+    				? <Text key='mtFldr'>Empty folder</Text>
 
     				: isTest ? testNoFolder : addButton
         		}
@@ -188,29 +190,45 @@ export default class MemorizeScreen extends React.Component {
 		        	<Icon
 			    		name={iconName} style={[styles[lastVisited], styles.folders, {color:globalStyles.color}]}
 
-			    		onPress={headerMenuIndx === null || headerMenuIndx === void(2) ?() => {
+			    		onPress={headerMenuIndx === null || headerMenuIndx === void(0) ?() => {
 
-			    			 var scrName = ['MemorizeVerse', 'FinalScreen'];
+			    			var scrName = ['MemorizeVerse', 'FinalScreen'];
 
-			    			 scrName = currScr === 0
-			    			 	? isTest ? 'TestVerse' : scrName[currScr]
+			    			scrName = currScr === 0
+			    			 	? isTest
+			    			 		? 'TestVerse' : scrName[currScr]
 			    			 	: scrName[currScr];
 
-				    			navigation.push(scrName, {lastVisited: possibleModes[currScr+1],
+				    		navigation.push(scrName, {lastVisited: possibleModes[currScr+1],
 
-				    				target: data, itemIndx:index, bodyStyles: globalStyles, 
+			    				target: data, itemIndx:index, bodyStyles: globalStyles, 
 
-				    				titleBar: params.titleBar, contentHeader: params.contentHeader,
+			    				titleBar: params.titleBar, contentHeader: params.contentHeader,
 
-				    				childCloseToggle: null, screenMode: params.screenMode
-				    			})
-				    		}: () => {
-
-				    			that.setState({modalChild: 4+headerMenuIndx, childCloseToggle: () => that.fetchFreshFolders(),
-
-				    			headerMenuIndx: null, headerMenuCtx: {key: ctx, displayName: item[ctx]}
-				    		});
+			    				childCloseToggle: null, screenMode: params.screenMode
+			    			})
 				    		}
+
+				    		:currScr === 0 ?
+
+				    			// folder rename
+					    		() => {
+
+					    			that.setState({modalChild: 4, childCloseToggle: () => that.fetchFreshFolders(),
+
+						    			headerMenuIndx: null, headerMenuCtx: {key: ctx, displayName: item[ctx]}
+						    		});
+					    		}
+
+				    			// verses rename
+				    			:() => {
+
+					    			that.setState({modalChild: 6, childCloseToggle: () => {
+
+						    				that.setState({displayData: that.foldersAndHeader(data), modalChild: null, headerMenuIndx: null})
+						    			}, headerMenuCtx: {key: ctx, displayName: item[ctx]}
+						    		})
+					    		}
 			    		}
 		        	/>
 		        	<Text style={{color: globalStyles.color}}>{item[ctx]}</Text>
@@ -229,21 +247,27 @@ export default class MemorizeScreen extends React.Component {
 
 		// we have a value here. listen for changes by reassigning the listeners
 		else {
-			var currData = this.state.displayData.props.data, {screenMap, navigation} = this.props;
+			var currData = this.state.displayData.props.data, {screenMap, navigation} = this.props,
 
-			if (Object.keys(screenMap).indexOf(navigation.state.params.lastVisited) == 0) currData.shift(); // omit add button
+			includeAddButton = 1;
 
-			if (ind === 0) this.setState({headerMenuIndx: ind, modalChild: null, displayData: null}, () =>{
+			if (navigation.state.params.lastVisited ===void(0) || Object.keys(screenMap).indexOf(navigation.state.params.lastVisited) == 0)
+			includeAddButton = 0;
 
-				// set an init state above since foldersAndHeader expects a live value from headerMenuIndx
+			if (ind === 0)
 
-				// omit the add button in the current view since foldersAndHeader will still give us another one
-				currData.shift()
-				this.setState({displayData: this.foldersAndHeader(currData)})
-			});
+				this.setState({headerMenuIndx: ind, modalChild: null, displayData: null}, () =>{
+
+					// set an init state above since foldersAndHeader expects a live value from headerMenuIndx
+
+					// omit the add button in the current view since foldersAndHeader will still give us another one
+					if (!includeAddButton) currData.shift();
+					
+					this.setState({displayData: this.foldersAndHeader(currData)})
+				});
 
 			// delete dialog should be raised at once so dont overwrite curr view
-			else this.setState({headerMenuIndx: ind, modalChild: 4+ ind, childCloseToggle: () => this.fetchFreshFolders()});
+			else this.setState({headerMenuIndx: ind, modalChild: 5, childCloseToggle: () => this.fetchFreshFolders()});
 		}
 	}
 }

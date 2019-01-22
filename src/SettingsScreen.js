@@ -18,6 +18,8 @@ import { GoogleSignin, GoogleSigninButton } from 'react-native-google-signin';
 
 import GDrive from "react-native-google-drive-api-wrapper";
 
+import ReactNativeAN from 'react-native-alarm-notification';
+
 
 export default class SettingsScreen extends React.Component {
 
@@ -26,7 +28,7 @@ export default class SettingsScreen extends React.Component {
 
 		var {navigation: {state: {params}}} = props;
 
-		this.state = { selectedTheme: 0, selectedSize: 0, contentHeader: params.contentHeader
+		this.state = { selectedTheme: 0, selectedSize: 0, contentHeader: params.contentHeader,
 
 			// read component styling from here instead since its altered after component mount
 			globalStyles: params.bodyStyles, alarmContext: null, isSigninInProgress: true
@@ -55,9 +57,14 @@ export default class SettingsScreen extends React.Component {
 			}
 		}),
 
-		headerOptions: [{backgroundColor: '#195ea1', color: '#18e9af'}, {backgroundColor: '#eee', color: '#e01',
+		headerOptions: [
 
-			paddingVertical:6, paddingHorizontal: 10}],
+			{backgroundColor: '#195ea1', color: '#18e9af'},
+
+			{backgroundColor: '#eee', color: '#e01', paddingVertical:6, paddingHorizontal: 10},
+
+			{backgroundColor: '#000', color: '#8a4e39'}
+		],
 
 		alarmNames: ['morning', 'afternoon', 'evening'],
 	}
@@ -76,7 +83,7 @@ export default class SettingsScreen extends React.Component {
 
 		DBProps(({misc: {alarms: {morning, afternoon, evening}}}) =>{
 
-			that.setState({{morningAlarm: morning, afternoonAlarm: afternoon, eveningAlarm: evening}},
+			that.setState({morningAlarm: morning, afternoonAlarm: afternoon, eveningAlarm: evening},
 
 				() => that.getUpdatedProps()
 			)
@@ -99,22 +106,39 @@ export default class SettingsScreen extends React.Component {
 
 		alarmTempl = alObj => {
 
-			if (alObj) return 
-				(<View style={[catContainer, {justifyContent: 'space-between',flex:1}]}>
+			if (alObj !== void(0)) {
+				var cap = alObj.name.substr(0,1).toUpperCase(), rest = alObj.name.substr(1);
+
+				return (<View style={[catContainer, {justifyContent: 'space-between',flex:1, marginBottom:15}]}>
 
 					<View style={{flex: 5}}>
-						<TouchableOpacity onPress={() =>(alarmOutput.bind(this))(alObj.alarmTime, alObj.index)}
-							style={{flex:2, marginBottom:5}}
+						<TouchableOpacity onPress={() =>(alarmOutput.bind(this))(...alObj.alarmTime.split(':').map(parseInt), alObj.index)}
+							style={{flex:2, marginBottom:15}}
 						>
-							<Text style={[catStyles, { left: 5}]}>{alObj.name} Reminder</Text>
+							<Text style={[catStyles, { left: 5}]}>{cap + rest} Reminder</Text>
 						</TouchableOpacity>
 
-						<Text style={[{flex:1, opacity: .5, left: 5}, catStyles]}>{alObj.alarmTime}</Text>
+						<Text style={[{flex:1, opacity: .5, left: 5}, catStyles]}>
+
+							{	alObj.alarmTime.split(':')
+
+								.map(x => x.length < 2 ? 0+x: x)
+
+								.join(':')
+							}
+						</Text>
 					</View>
 
-					<Button title='cancel' disabled={!alObj.alarmActive} onPress={() => this.alarmToggleHandler(alObj.index)}
-						style={{flex: 1}}/>
+					<TouchableOpacity onPress={() => alObj.alarmActive ? this.alarmToggleHandler(alObj.index)() : false}
+
+	    			style={[
+	    				{ backgroundColor: globalStyles.color, top: 20},
+
+	    				styles.cancelButton] }>
+	    			<Text style={{color: !alObj.alarmActive ? '#666': globalStyles.backgroundColor}}>CANCEL</Text>
+	    		</TouchableOpacity>
 				</View>)
+			}
 		},
 
 		alarmData = [morningAlarm, afternoonAlarm, eveningAlarm].map((pv, h) => {
@@ -133,12 +157,12 @@ export default class SettingsScreen extends React.Component {
 						onValueChange = {(itemValue, itemIndex) => this.saveSettings(itemValue, itemIndex,'theme')}
 						style={catStyles}
 					>
-						{themeOptions.map((obj,i) => <Picker.Item label={obj.name} value={i} key={'ts'+i} style={styles.pickerItem} />)}
+						{themeOptions.map((obj,i) => <Picker.Item label={obj.name} value={i} key={'ts'+i} style={styles.pickerItem} size={30} />)}
 					</Picker>
 				</View>
 			),
 			*/(
-				<View style={catContainer}>
+				<View style={[catContainer]}>
 					<Text style={[catStyles, { left: 5}]}>Text size</Text>
 					
 					<Picker mode='dropdown' selectedValue={selectedSize}
@@ -157,13 +181,13 @@ export default class SettingsScreen extends React.Component {
 			...alarmData.map( alarmTempl),
 			(
 				<View style={catContainer}>
-					<Text style={[catStyles, { left: 5}]}>Synchronize</Text>
+					<Text style={[catStyles, { left: 5, marginVertical: 15}]}>Synchronize</Text>
 					
-					<GoogleSigninButton style={{ width: 48, height: 48 }} size={GoogleSigninButton.Size.Wide}
+					<GoogleSigninButton size={GoogleSigninButton.Size.Wide} onPress={() => this.gSignIn()}
     				
-	    				color={GoogleSigninButton.Color.Light} onPress={this.gSignIn}
+	    				color={GoogleSigninButton.Color.Dark} disabled={!this.state.isSigninInProgress}
 	    				
-	    				disabled={this.state.isSigninInProgress}
+	    				style={{ width: 318, height: 48 }} 
 	    			/>
 				</View>
 			),
@@ -180,10 +204,9 @@ export default class SettingsScreen extends React.Component {
    						</TouchableHighlight>
    					)}
   
-  					renderSectionHeader={({section: {title}}) => (
-    			
-    					<Text style={[contentHeader, {marginVertical:10}]}>{title}</Text>
-  					)}
+  					renderSectionHeader={({section: {title}}) => 
+  						<Text style={[contentHeader, {marginVertical:10}]}>{title}</Text>
+  					}
 					
 					/*ItemSeparatorComponent={() => <View style={{ height: 1, flex: 1, backgroundColor: "#99a" }}/>
     
@@ -226,25 +249,30 @@ export default class SettingsScreen extends React.Component {
 	setAlarm(hour, min, inactive, alCtx) {
 		var time = `${hour}:${min}`, bool = !inactive, // if undefined or null, enable alarm
 
-		that = this, ctx = this.props.alarmNames[alCtx];
+		that = this, ctx = this.props.alarmNames[alCtx]+'Alarm';
 
 		// capture datepicker input and store that as time
 		store.save(ctx,
 
-			{'alarmTime': time, 'alarmActive': bool, 'alarmId': that.state[ctx+'Alarm'].alarmId})
-		.then( () =>
+			{'alarmTime': time, 'alarmActive': bool, 'alarmId': that.state[ctx].alarmId})
+		.then( () => {
+
 			RNCalendarEvents.authorizationStatus().then(status => {
 
-				if (status != 'authorized' && Platform.OS == 'android') RNCalendarEvents.authorizeEventStore()
+				if (status != 'authorized' ) {
 
-					.then(status => this.alarmAuthorized({status:status, time:time, bool:bool, ind: alCtx}))
+					if (Platform.OS != 'ios')RNCalendarEvents.authorizeEventStore()
+
+					.then(status => this.alarmAuthorized( {time:time, bool:bool, ind: alCtx}))
 
 					.catch(err => that.postAlarmAction(err));
 
-				else this.alarmAuthorized({status:status, time:time, bool:bool, ind: alCtx});
+					else this.alarmAuthorized({time:time, bool:bool, ind: alCtx})
+				}
+			})
+		})
 
-			}).catch(err => that.postAlarmAction(err))
-		);
+		.catch(err => that.postAlarmAction(err))
 	}
 
 	postAlarmAction (err) {
@@ -298,19 +326,41 @@ export default class SettingsScreen extends React.Component {
 		});
 	}
 
-	alarmAuthorized ({status, time, bool, ind}) {
+	alarmAuthorized ({time, bool, ind}) {
+		var that = this;
 
-		if (status == 'authorized' || Platform.OS == 'ios') {
+		if (bool) {
 
 			var {alarmNames}= this.props, ctx = alarmNames[ind], evtId = 'activate-memo'+ind,
 
-			titleStr  = 'EMAW BVM ' + ctx + 'alarm',
+			titleStr  = 'EMAW BVM ' + ctx + ' alarm', {globalStyles} = this.state,
 
 			// 2:10 to 02:10
-			timeFormat = time.split(':').map(x => x.length < 2 ? 0+x: x), h = new Date();
+			timeFormat = time.split(':').map(x => x.length < 2 ? 0+x: x), h = new Date(),
+
+			startDate = new Date(new Date().setHours(...timeFormat)),
+
+			desc = 'Have you memorized a verse this ' + ctx+'?',
+
+			updState = id => {
+
+				var l = {};
+
+				l[ ctx+'Alarm'] = {
+					alarmTime: timeFormat.join(':'),
+
+					alarmActive: bool,
+
+					alarmId: ind
+				};
+				
+				l.alarmContext= ind;
+						
+				that.setState(l, () => that.postAlarmAction('Added reminder'))
+			};
 
 			// create new calendar entry
-			if (bool) return RNCalendarEvents.saveEvent(titleStr, {id: evtId,
+			RNCalendarEvents.saveEvent(titleStr, {id: evtId,
 
 				title: titleStr,
 
@@ -321,28 +371,64 @@ export default class SettingsScreen extends React.Component {
 					endDate: new Date((h.getFullYear()+1) + '-' + (h.getMonth()+1) + '-' + h.getDate()).toISOString(),
 				},
 
-				startDate: new Date(new Date().setHours(...timeFormat)).toISOString(),
+				startDate: startDate.toISOString(),
 
-				description: 'Have you memorized a verse this ' + ctx+'?',
+				description: desc,
 
 				alarms: [{
 					date: 1 // relative offset from the start date
 				}]
 			})
 
-			.then(id => {console.log(id)
-				this.setState( {this.state[ctx+'Alarm']: {alarmTime: timeFormat.join(':'), alarmActive: bool, alarmId: ind}, alarmContext: ind},
+			.then(updState);
 
-				this.postAlarmAction('Added reminder'))
-			});
+			if (Platform.OS == 'android'){
+        
+				var {globalStyles} = that.state, alarmNotifData = {
+					id: '12345' /*evtId*/,                                  // Required
+					title: titleStr,               // Required
+					message: desc,           // Required
+					channel: "emaw_bvm_id",                     // Required. Same id as specified in MainApplication's onCreate method
+					ticker: "My Notification Ticker",
+					auto_cancel: true,                            // default: true. should be false i.e. cancelled manually so we can update db at once
+					vibrate: true,
+					vibration: 100,                               // default: 100, no vibration if vibrate: false
+					small_icon: "ic_launcher",                    // Required
+					large_icon: "ic_launcher",
+					play_sound: true,
+					sound_name: null,                             // Plays custom notification ringtone if sound_name: null
+					color: globalStyles.backgroundColor,
+					schedule_once: true,                          // Works with ReactNativeAN.scheduleAlarm so alarm fires once
+					tag: ctx,
+					fire_date: ReactNativeAN.parseDate(startDate),                          // Date for firing alarm, Required for ReactNativeAN.scheduleAlarm
+				};
 
-			// remove event
-			return RNCalendarEvents.removeEvent(evtId)
+				ReactNativeAN.getScheduledAlarms()
+				
+				.then(allAlarms => allAlarms.every(n => n.id !== alarmNotifData.id))
 
-			.then(() => {
-				var old = this.state[ctx+'Alarm']; Object.assign(old, {alarmActive: bool});
+				.then(() => {
 
-				this.setState( old, this.postAlarmAction('removed reminder'))});
+					ReactNativeAN.scheduleAlarm(alarmNotifData);
+
+					updState();
+				});
+	
+			}
+		}
+
+		// remove event
+		else {
+
+			RNCalendarEvents.removeEvent(evtId)
+
+				.then(() => {
+					var old = that.state[ctx+'Alarm']; Object.assign(old, {alarmActive: bool});
+
+					that.setState( old, that.postAlarmAction('Removed reminder'))
+				});
+
+			if (Platform.OS == 'android')  ReactNativeAN.deleteAlarm(evtId);
 		}
 	}
 
@@ -350,57 +436,50 @@ export default class SettingsScreen extends React.Component {
 
 		GoogleSignin.configure({
 		  scopes: ['https://www.googleapis.com/auth/drive.file'],
-		  webClientId: '102492523207563707116', // client ID of type WEB (needed to verify user ID and offline access)
+		  webClientId: '728356249338-b3elthn9c5eh6jbflu97ih85rdiqmhe6.apps.googleusercontent.com', // client ID of type WEB (needed to verify user ID and offline access)
 		  offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
 		  hostedDomain: '', // specifies a hosted domain restriction
 		  loginHint: '', // [iOS] The user's ID, or email address, to be prefilled in the authentication UI if possible. [See docs here](https://developers.google.com/identity/sign-in/ios/api/interface_g_i_d_sign_in.html#a0a68c7504c31ab0b728432565f6e33fd)
 		  forceConsentPrompt: true, // [Android] if you want to show the authorization prompt at each login.
-		  accountName: '', // [Android] specifies an account name on the device that should be used
+		  accountName: 'EMAW BVM', // [Android] specifies an account name on the device that should be used
 		});
 
 		try {
-		    try {
-		    	await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+	    	await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-			    this.setState({ isSigninInProgress: false });
+		    this.setState({ isSigninInProgress: false });
 
-			    const userInfo = await GoogleSignin.signIn();
+		    const userInfo = await GoogleSignin.signIn();
+			
+		    this.postAlarmAction('Success! Synchronizing...');
 
-			    this.postAlarmAction('Success! Synchronizing...');
 
+		    GDrive.setAccessToken(userInfo.accessToken);
 
-			    GDrive.setAccessToken(userInfo.accessToken);
+		    GDrive.init();
 
-			    GDrive.init();
+		    store.get('AllFolders').then(function (arr) {
 
-			    store.get('AllFolders').then(function (arr) {
+			    arr.forEach(r => GDrive.files.safeCreateFolder({
+					
+						name: r.folderName, parents: ["root"]
+					}).then(folderId => r.verses.forEach(vr =>
 
-				    arr.forEach(r => GDrive.files.safeCreateFolder({
-						
-							name: r.folderName, parents: ["root"]
-						}).then(folderId => r.verses.forEach(vr =>
-
-							GDrive.files.createFileMultipart(
-								// use r.folderName if this doesnt work
-								vr.text, ".txt", { name: vr.quotation, parents: ["root", folderId]
-							 
-							}))
-						)
+						GDrive.files.createFileMultipart(
+							// use r.folderName if this doesnt work
+							vr.text, ".txt", { name: vr.quotation, parents: ["root", folderId]
+						 
+						}))
 					)
-				})
-			}
-
-		    catch (error) {
-		    	this.postAlarmAction('Google play services are unavailable');
-
-				this.setState({ isSigninInProgress: true });
-			}
+				)
+			})
 		}
-		catch (error) {
-				this.postAlarmAction(error.code);
 
-				this.setState({ isSigninInProgress: true });
-			}
+	    catch (error) {console.log(error)
+	    	this.postAlarmAction('Google play services are unavailable');
+
+			this.setState({ isSigninInProgress: true });
+		}
 	}
 }
 
@@ -414,8 +493,14 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 	},
 	pickerItem: {
-		fontSize: 70,
 		left: 0,
-		maxHeight: 35
-	}
+		maxHeight: 35,
+	},
+  cancelButton: {
+  	marginHorizontal: 5,
+  	paddingVertical: 10,
+  	paddingHorizontal: 5,
+  	borderRadius: 5,
+  	height: 40
+  }
 });

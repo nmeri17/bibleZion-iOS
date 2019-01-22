@@ -18,17 +18,13 @@ export default class MenuScreen extends React.Component {
 	}
 
 	static defaultProps = {
-	   screens: [{name: 'Save verse', route:'SaveVerse',icon: Platform.select({ios:'ios-save', android:'md-save',
-	   	color: '#A59CBF'},
+	   screens: [{name: 'Save verse', route:'SaveVerse',icon: Platform.select({ios:'ios-save', android:'md-save'})},
 
-	   	{name: 'Memorize', route:'MemorizeVerse',icon: Platform.select({ios:'ios-filing', android:'md-filing',
-	   		color: '#4CAF50'},
+	   	{name: 'Memorize', route:'MemorizeVerse',icon: Platform.select({ios:'ios-filing', android:'md-filing'})},
 
-	   	{name: 'Test yourself', route:'TestVerse',icon: Platform.select({ios:'ios-school', android:'md-school',
-	   		color: '#fb0'},
+	   	{name: 'Test yourself', route:'TestVerse',icon: Platform.select({ios:'ios-school', android:'md-school'})},
 
-	   	{name: 'Settings', route:'SettingsVerse',icon: Platform.select({ios:'ios-settings', android:'md-settings',
-	   		color: '#C391A9'}],
+	   	{name: 'Settings', route:'SettingsVerse',icon: Platform.select({ios:'ios-settings', android:'md-settings'})}],
 	 }
 
 	static navigationOptions = {
@@ -36,12 +32,13 @@ export default class MenuScreen extends React.Component {
 	};
 
 	componentDidMount() {
+		var that = this;
 
 		DBProps(({appWideStyles}) => {
 
 			SplashScreen.hide();
 
-			this.setState({globalStyles: appWideStyles, contentHeader: RelatedStyle(appWideStyles,1),
+			that.setState({globalStyles: appWideStyles, contentHeader: RelatedStyle(appWideStyles,1),
 
 				titleBar: RelatedStyle(appWideStyles,0)
 			})
@@ -85,9 +82,9 @@ export default class MenuScreen extends React.Component {
 						}
 					)}
 					>
-					<View style={[styles.menuCards, {backgroundColor: color}, marginType]}>
-						<Icon name={icon} style={{fontSize:40}} />
-						<Text>{name}</Text>
+					<View style={[styles.menuCards, {backgroundColor: '#0009'}, marginType]}>
+						<Icon name={icon} style={{fontSize:40, color: '#fff'}} />
+						<Text style={{color: '#fff'}}>{name}</Text>
 					</View>
 				</TouchableHighlight>
 	          }.bind(this)}
