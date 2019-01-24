@@ -375,7 +375,11 @@ export default class SettingsScreen extends React.Component {
 			RNAlarm.clearAlarm();
 
 			// reset others that were preset if any
-			var reset = alarmNames.filter((s,d) => d != ind && that.state[s+'Alarm'].alarmActive);
+			var reset = alarmNames
+			
+			.filter((s,d) => d != ind && that.state[s+'Alarm'].alarmActive)
+
+			.map(n => that.state[n+'Alarm']);
 
 			if (reset.length) reset.forEach(z => that.alarmAuthorized({time: z.alarmTime, bool: z.alarmActive, ind:z.alarmId}))
 			
