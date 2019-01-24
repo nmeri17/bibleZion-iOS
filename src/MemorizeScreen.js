@@ -67,8 +67,13 @@ export default class MemorizeScreen extends React.Component {
   		// this runs async
 		if (!headerRightHndlr) that.props.navigation.setParams({
 			headerRightHndlr: function() {
+				var currData = that.state.displayData.props.data,
 
-	    		if (that.state.displayData.props.data.length > 1) that.setState({childCloseToggle: (ind) =>
+				folderLoad = !target && currData.length > 1, // account for addButton
+
+				versesLoad = target && currData.length > 0;
+
+	    		if (folderLoad || versesLoad) that.setState({childCloseToggle: (ind) =>
 
 	    			// ind of clicked menu item
 	    			that.headerMenuClose(ind), modalChild: !target ? 3: 7})
@@ -139,8 +144,10 @@ export default class MemorizeScreen extends React.Component {
 			onPress={() => this.newFolderButton()}
 		/>,
 
+		noRightHeader = headerMenuIndx === null || headerMenuIndx === void(0),
+
 		includeAddButton = (() => {
-			if (!isTest && lastVisited == possibleModes[0] && headerMenuIndx === null || headerMenuIndx === void(0)) {
+			if (!isTest && lastVisited == possibleModes[0] && noRightHeader) {
 
 				data.unshift(addButton);
 
@@ -173,7 +180,10 @@ export default class MemorizeScreen extends React.Component {
 
 			var iconName = iconsMap[lastVisited], ctx = screenMap[lastVisited], that = this,
 
-			currScr = possibleModes.indexOf(lastVisited), longestPath = currScr >= possibleModes.length-2;
+			currScr = possibleModes.indexOf(lastVisited), longestPath = currScr >= possibleModes.length-2,
+
+			// header menu modals
+			folderCbs = { 0: 4, 1: 8 }, verseCbs = { 0: 6, 1: 9 };
 
 	        folders = <FlatList
 	          data={data} numColumns={3} key='cv' initialNumToRender={10}
@@ -188,9 +198,9 @@ export default class MemorizeScreen extends React.Component {
 
 	          	return <View key={'items'+index} style={styles.dataColumn}>
 		        	<Icon
-			    		name={iconName} style={[styles[lastVisited], styles.folders, {color:globalStyles.color}]}
+			    		name={iconName} style={[styles[lastVisited], styles.folders, {color: noRightHeader ? globalStyles.color: '#222'}]}
 
-			    		onPress={headerMenuIndx === null || headerMenuIndx === void(0) ?() => {
+			    		onPress={noRightHeader ?() => {
 
 			    			var scrName = ['MemorizeVerse', 'FinalScreen'];
 
@@ -209,24 +219,23 @@ export default class MemorizeScreen extends React.Component {
 			    			})
 				    		}
 
+				    		// folder context?
 				    		:currScr === 0 ?
+				    			() => {
 
-				    			// folder rename
-					    		() => {
-
-					    			that.setState({modalChild: 4, childCloseToggle: () => that.fetchFreshFolders(),
+					    			that.setState({modalChild: folderCbs[headerMenuIndx], childCloseToggle: () => that.fetchFreshFolders(),
 
 						    			headerMenuIndx: null, headerMenuCtx: {key: ctx, displayName: item[ctx]}
-						    		});
+						    		})
 					    		}
 
-				    			// verses rename
+					    		// verses behaviour
 				    			:() => {
 
-					    			that.setState({modalChild: 6, childCloseToggle: () => {
+					    			that.setState({modalChild: verseCbs[headerMenuIndx], childCloseToggle: (newData) => {
 
-						    				that.setState({displayData: that.foldersAndHeader(data), modalChild: null, headerMenuIndx: null})
-						    			}, headerMenuCtx: {key: ctx, displayName: item[ctx]}
+						    				that.setState({displayData: that.foldersAndHeader(newData), modalChild: null, headerMenuIndx: null})
+						    			}, headerMenuCtx: {key: ctx, displayName: item[ctx]}, headerMenuIndx: null
 						    		})
 					    		}
 			    		}
@@ -254,9 +263,11 @@ export default class MemorizeScreen extends React.Component {
 			if (navigation.state.params.lastVisited ===void(0) || Object.keys(screenMap).indexOf(navigation.state.params.lastVisited) == 0)
 			includeAddButton = 0;
 
-			if (ind === 0)
+			// delete dialog should be raised at once so dont overwrite curr view
+			if (ind == 2) this.setState({headerMenuIndx: ind, modalChild: 5, childCloseToggle: () => this.setState({headerMenuIndx: null}, this.fetchFreshFolders())});
 
-				this.setState({headerMenuIndx: ind, modalChild: null, displayData: null}, () =>{
+			// reassign listeners
+			else this.setState({headerMenuIndx: ind, modalChild: null, displayData: null}, () =>{
 
 					// set an init state above since foldersAndHeader expects a live value from headerMenuIndx
 
@@ -265,9 +276,6 @@ export default class MemorizeScreen extends React.Component {
 					
 					this.setState({displayData: this.foldersAndHeader(currData)})
 				});
-
-			// delete dialog should be raised at once so dont overwrite curr view
-			else this.setState({headerMenuIndx: ind, modalChild: 5, childCloseToggle: () => this.fetchFreshFolders()});
 		}
 	}
 }

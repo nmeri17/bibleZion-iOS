@@ -80,7 +80,7 @@ export default class FolderComp extends React.Component {
 
 	closeModal (...val) {
 		this.setState({popup: false}, () => {
-		console.log(this.props.onChildModalClose)
+		
 			if (this.props.onChildModalClose !== null) {
 	
 				this.props.onChildModalClose(...val);// trigger close behaviour i.e. parent update
@@ -89,19 +89,21 @@ export default class FolderComp extends React.Component {
 	}
 
 	modalContents () {
-		var {globalStyles, contentHeader, verseText} = this.state;
+		var {globalStyles, contentHeader, verseText} = this.state, {backgroundColor, color} = globalStyles,
+
+		{clickPath} = this.props, {checkButton, headerMenuItem} = styles;
 
 		return [
 			// 0: create folder
 			<View style={styles.modalStyles}>
-				<TextInput ref='newFolderInput' placeholder='Folder name' underlineColorAndroid={globalStyles.color}
+				<TextInput ref='newFolderInput' placeholder='Folder name' underlineColorAndroid={color}
 
-					autoCapitalize='sentences' maxLength={15} style={{color: globalStyles.color}} />
+					autoCapitalize='sentences' maxLength={15} style={{color: color}} />
 
 				<TouchableOpacity onPress={() => this.folderSave()}
 
-	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
-	    			<Text style={{color:globalStyles.backgroundColor}}>Create folder</Text>
+	    			style={[{ backgroundColor: color}, checkButton] }>
+	    			<Text style={{color: backgroundColor}}>Create folder</Text>
 	    		</TouchableOpacity>
 			</View>,
 
@@ -111,9 +113,9 @@ export default class FolderComp extends React.Component {
 					
 				<TouchableOpacity onPress={() => this.closeModal()}
 
-	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+	    			style={[{ backgroundColor: color}, checkButton] }>
 	    			
-	    			<Text style={{color:globalStyles.backgroundColor}}>Test another verse</Text>
+	    			<Text style={{color: backgroundColor}}>Test another verse</Text>
 
 	    		</TouchableOpacity>
 			</View>,
@@ -132,9 +134,9 @@ export default class FolderComp extends React.Component {
 					
 				<TouchableOpacity onPress={() => this.closeModal()}
 
-	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+	    			style={[{ backgroundColor: color}, checkButton] }>
 	    			
-	    			<Text style={{color:globalStyles.backgroundColor}}>Try again</Text>
+	    			<Text style={{color: backgroundColor}}>Try again</Text>
 
 	    		</TouchableOpacity>
 			</View>,
@@ -142,17 +144,19 @@ export default class FolderComp extends React.Component {
 			// 3: folders right headerMenu
 			<View style={styles.headerMenu}>
 
-				<Text onPress={() => this.closeModal(0)} style={{color: contentHeader.color}}>Rename</Text>
+				<Text onPress={() => this.closeModal(0)} style={[{color: contentHeader.color}, headerMenuItem]}>Rename</Text>
+
+				<Text onPress={() => this.closeModal(1)} style={[{color: contentHeader.color}, headerMenuItem]}>Delete</Text>
 				
-				<Text onPress={() => this.closeModal(1)} style={{color: contentHeader.color}}>Delete all</Text>
+				<Text onPress={() => this.closeModal(2)} style={[{color: contentHeader.color}, headerMenuItem]}>Delete all</Text>
 			</View>,
 
 			// 4: folder rename
 			<View style={styles.modalStyles}>
 
-				<TextInput ref='renameFolderInput' placeholder='New name' underlineColorAndroid={globalStyles.color}
+				<TextInput ref='renameFolderInput' placeholder='New name' underlineColorAndroid={color}
 
-					autoCapitalize='sentences' maxLength={15} style={{color: globalStyles.color}}
+					autoCapitalize='sentences' maxLength={15} style={{color: color}}
 				/>
 
 			{/* `folderRename` lived on its component (called through modal close). but we don't want
@@ -160,9 +164,9 @@ export default class FolderComp extends React.Component {
 			*/}
 				<TouchableOpacity onPress={() => this.folderRename()}
 
-	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+	    			style={[{ backgroundColor: color}, checkButton] }>
 
-	    			<Text style={{color:globalStyles.backgroundColor}}>Rename</Text>
+	    			<Text style={{color: backgroundColor}}>Rename</Text>
 	    		
 	    		</TouchableOpacity>
 			</View>,
@@ -171,12 +175,22 @@ export default class FolderComp extends React.Component {
 			<View style={styles.modalStyles}>
 				<Text>Sure to delete all documents?</Text>
 
-				<TouchableOpacity onPress={() => this.resetDocs()}
+				<View style={{flexDirection: 'row', flexWrap: 'nowrap'}}>
 
-	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
-	    			
-	    			<Text style={{color:globalStyles.backgroundColor}}>Reset</Text>
-	    		</TouchableOpacity>
+					<TouchableOpacity onPress={() => this.closeModal()}
+
+		    			style={[{ backgroundColor: color}, checkButton] }>
+		    			
+		    			<Text style={{color: backgroundColor}}>Cancel</Text>
+		    		</TouchableOpacity>
+
+					<TouchableOpacity onPress={() => this.resetDocs()}
+
+		    			style={[{ backgroundColor: '#f00'}, checkButton] }>
+		    			
+		    			<Text style={{color: '#fff'}}>Reset</Text>
+		    		</TouchableOpacity>
+		    	</View>
 			</View>,
 
 			// 6: edit verse contents
@@ -184,27 +198,71 @@ export default class FolderComp extends React.Component {
 
 				<TextInput multiline={true} style={{height: 60}} placeholder='New Reading' ref='vsUpdBox'
 
-	    			style={{color: globalStyles.color}} autoCapitalize='sentences' autoCorrect={true}
+	    			style={{color: color}} autoCapitalize='sentences' autoCorrect={true}
 
-	    			placeholderTextColor={globalStyles.color} selectTextOnFocus={true}
+	    			placeholderTextColor={color} selectTextOnFocus={true}
 
-	    			defaultValue={verseText}
+	    			defaultValue={verseText} underlineColorAndroid={color}
 	    		/>
 
 				<TouchableOpacity onPress={() => this.updateVerse(this.refs.vsUpdBox._lastNativeText)}
 
-	    			style={[{ backgroundColor: globalStyles.color}, styles.checkButton] }>
+	    			style={[{ backgroundColor: color}, checkButton] }>
 	    			
-	    			<Text style={{color:globalStyles.backgroundColor}}>Update</Text>
+	    			<Text style={{color: backgroundColor}}>Update</Text>
 	    		</TouchableOpacity>
 			</View>,
 
 			// 7: verses right headerMenu
 			<View style={styles.headerMenu}>
 
-				<Text onPress={() => this.closeModal(0)} style={{color: contentHeader.color}}>Edit</Text>
+				<Text onPress={() => this.closeModal(0)} style={[{color: contentHeader.color}, headerMenuItem]}>Edit</Text>
 				
-				{/*<Text onPress={() => this.closeModal(1)} style={{color: contentHeader.color}}>Delete</Text>*/}
+				<Text onPress={() => this.closeModal(1)} style={[{color: contentHeader.color}, headerMenuItem]}>Delete</Text>
+			</View>,
+
+			// 8: folder delete
+			<View style={styles.modalStyles}>
+				<Text>Sure to delete "{clickPath? clickPath.displayName: null}" and its contents?</Text>
+
+				<View style={{flexDirection: 'row', flexWrap: 'nowrap'}}>
+
+					<TouchableOpacity onPress={() => this.closeModal()}
+
+		    			style={[{ backgroundColor: color}, checkButton] }>
+		    			
+		    			<Text style={{color:backgroundColor}}>Cancel</Text>
+		    		</TouchableOpacity>
+
+					<TouchableOpacity onPress={() => this.folderDelete()}
+
+		    			style={[{ backgroundColor: '#f00'}, checkButton] }>
+		    			
+		    			<Text style={{color: '#fff'}}>Delete</Text>
+		    		</TouchableOpacity>
+		    	</View>
+			</View>,
+
+			// 9: verse delete
+			<View style={styles.modalStyles}>
+				<Text>Delete "{clickPath ? clickPath.displayName: null}"?</Text>
+
+				<View style={{flexDirection: 'row', flexWrap: 'nowrap'}}>
+
+					<TouchableOpacity onPress={() => this.closeModal()}
+
+		    			style={[{ backgroundColor: color}, checkButton] }>
+		    			
+		    			<Text style={{color:backgroundColor}}>Cancel</Text>
+		    		</TouchableOpacity>
+
+					<TouchableOpacity onPress={() => this.verseDelete()}
+
+		    			style={[{ backgroundColor: '#f00'}, checkButton] }>
+		    			
+		    			<Text style={{color: '#fff'}}>Delete</Text>
+		    		</TouchableOpacity>
+		    	</View>
 			</View>
 		];
 	}
@@ -232,26 +290,29 @@ export default class FolderComp extends React.Component {
 	folderRename () {
 		var {clickPath: {key,displayName}} = this.props, newName = this.refs.renameFolderInput._lastNativeText,
 
-		that = this, folderIndx, itemIndx;
+		that = this, folderIndx;
 
-		if (newName) store.get('AllFolders').then(items => {
+		if (newName) store.get('AllFolders')
+
+		.then(items => {
     		
     		// get the old name it bore
     		folderIndx = items.findIndex(obj => obj[key] == displayName);
     		
     		if (folderIndx !== -1) items[folderIndx][key] = newName;
 
-    		else {
-    			console.log(items)
-    		}
+    		return items;
+		})
 
-			store.save('AllFolders', items).then(() => that._toast.show({
+		.then(xkl => {store.save('AllFolders', xkl); return xkl})
+
+		.then(xkl => that._toast.show({
 				position: Toast.constants.gravity.top,
       			duration: 50,
 				children: "Rename successful",
-				animationEnd: () => that.closeModal()
-			}))
-		});
+				animationEnd: () => that.closeModal(xkl)
+			})
+		)
 	}
 
 	resetDocs () {
@@ -270,8 +331,10 @@ export default class FolderComp extends React.Component {
 
 		that = this, folderIndx, itemIndx;
 
-		if (newCont) store.get('AllFolders').then(items => {
-    		
+		if (newCont) store.get('AllFolders')
+
+		.then(items => {
+		
     		// get the verse index
     		folderIndx = items.findIndex(obj => {
 
@@ -282,30 +345,82 @@ export default class FolderComp extends React.Component {
 
 			items[folderIndx].verses[itemIndx].text = newCont;
 
-			store.save('AllFolders', items).then(() => that._toast.show({
-				position: Toast.constants.gravity.top,
-      			duration: 50,
-				children: "Edit successful",
-				animationEnd: () => that.closeModal()
-			}))
-		});
+			return items;
+		})
+
+		.then(xkl => {store.save('AllFolders', xkl); return xkl})
+
+		.then(xkl => that._toast.show({
+			position: Toast.constants.gravity.top,
+  			duration: 50,
+			children: "Edit successful",
+			animationEnd: () => that.closeModal(xkl[folderIndx].verses)
+		}));
 	}
 
 	initVerseText () {
-		var that = this;
+		var that = this, {clickPath: {key, displayName}} = this.props;
 
 		store.get('AllFolders').then(items => {
     		
     		// get the verse index
     		folderIndx = items.findIndex(obj => {
 
-				itemIndx = obj.verses.findIndex(vObj => vObj[this.props.clickPath.key] == this.props.clickPath.displayName);
+				itemIndx = obj.verses.findIndex(vObj => vObj[key] == displayName);
 
 				return itemIndx !== -1;
 			});
 
 			that.setState({verseText: items[folderIndx].verses[itemIndx].text})
 		});
+	}
+
+	folderDelete () {
+		var {clickPath: {key,displayName}} = this.props, that = this;
+
+		store.get('AllFolders')
+		.then(items => items.filter(obj => obj[key] != displayName))
+
+		.then(xkl => {store.save('AllFolders', xkl); return xkl})
+
+		.then(xkl => that._toast.show({
+				position: Toast.constants.gravity.top,
+      			duration: 50,
+				children: "Deleted",
+				animationEnd: () => that.closeModal(xkl)
+			})
+		);
+	}
+
+	verseDelete () {
+		var {clickPath: {key,displayName}} = this.props, that = this, folderIndx, itemIndx;
+
+		store.get('AllFolders')
+
+		.then(items => {
+    		
+    		// get the verse index
+    		folderIndx = items.findIndex(obj => {
+
+				itemIndx = obj.verses.findIndex(vObj => vObj[key] == displayName);
+
+				return itemIndx !== -1;
+			});
+
+			items[folderIndx].verses = items[folderIndx].verses.filter((a,m) => m != itemIndx);
+
+			return items;
+		})
+
+		.then(xkl => {store.save('AllFolders', xkl); return xkl})
+
+		.then(xkl => that._toast.show({
+				position: Toast.constants.gravity.top,
+      			duration: 50,
+				children: "Deleted",
+				animationEnd: () => that.closeModal(xkl[folderIndx].verses)
+			})
+		);
 	}
 }
 
@@ -335,17 +450,23 @@ const styles = StyleSheet.create({
 	  	left: 200,
 	  	top: 50, // this should've been read from the icon's position
 		backgroundColor: '#eee',
-		paddingHorizontal: 10,
-		paddingVertical: 10,
 		maxWidth: 120,
 		borderRadius: 5
 	  },
 	  checkButton: {
 	  	marginHorizontal: 5,
+	  	marginTop: 30,
 	  	paddingVertical: 10,
 	  	paddingHorizontal: 5,
 	  	borderRadius: 5,
 		bottom: 0,
 		marginBottom: 5
+	  },
+	  headerMenuItem: {
+	  	borderBottomColor: '#ccc',
+	  	borderBottomWidth: 1,
+		paddingHorizontal: 10,
+		paddingTop: 13,
+		paddingBottom: 3
 	  }
 });

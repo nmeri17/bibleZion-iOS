@@ -108,7 +108,7 @@ export default class FinalContent extends React.Component {
 
 										onPress={() => that.setState({displayMemo: !displayMemo})}
 									>
-										{ !displayMemo ? 'Click to show ' + obj.quotation: 'Hide ' + obj.quotation}
+										{ !displayMemo ? 'Tap to show ' + obj.quotation: 'Hide ' + obj.quotation}
 
 									</Text>
 								]},
@@ -159,9 +159,9 @@ export default class FinalContent extends React.Component {
 		// update state to display modal
 		this.setState((state, props) => {
 
-			var noDiff = GoodToBad(userInput.trim(), target, [styles.correctText, {fontWeight: 'bolder'}]),
+			var noDiff = GoodToBad(userInput.trim(), target, [styles.correctText, {fontWeight: '700'}]),
 
-			noDiff2 = BadToGood(target, userInput.trim(), [styles.nullText, {fontWeight: 'bolder'}]);
+			noDiff2 = BadToGood(target, userInput.trim(), [styles.nullText, {fontWeight: '700'}]);
 
 			if (!noDiff) return {modalChild: 1, childCloseToggle: () => props.navigation.goBack()};
 

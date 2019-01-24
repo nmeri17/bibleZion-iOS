@@ -169,7 +169,7 @@ export default class SaveScreen extends React.Component {
   			duration: 50,
 			children: toastMsg[ind],
 			animationEnd: () => {
-				ctx._toast._toastAnimationToggle = setTimeout(() => {
+				if (ctx._toast !== null) ctx._toast._toastAnimationToggle = setTimeout(() => {
 					ctx._toast.hide({
 						duration: 1,
 						animationEnd: () => onComplete()
