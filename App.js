@@ -60,9 +60,9 @@ const MenuItems = createStackNavigator({
         
         screen: FinalContent,
       },
-    }, {headerMode : 'float'});
+    }, {headerMode : 'float'}),
 
 // static defaultProps = {uriPrefix: Platform.OS == 'android' ? 'BibleZion://mychat/' : 'BibleZion://' }
-const App = createAppContainer(MenuItems);
+App = createAppContainer(MenuItems);
 
 export default App;
