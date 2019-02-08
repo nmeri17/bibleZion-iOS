@@ -2,15 +2,13 @@ import React, {Component} from 'react';
 
 import {Platform, StyleSheet, Text, View, TextInput, Button, TimePickerAndroid, Modal, Picker,
 
-	TouchableOpacity, SectionList, TouchableHighlight} from 'react-native';
+	TouchableOpacity, SectionList, TouchableHighlight, Switch} from 'react-native';
 
-import {DBProps,} from './app-wide-styling';
+import {DBProps, } from './app-wide-styling';
 
 import TimePicker from 'react-native-timepicker';
 
 import store from 'react-native-simple-store';
-
-import Icon from 'react-native-vector-icons/Ionicons';
 
 import Toast from 'rn-toaster';
 
@@ -19,6 +17,10 @@ import { GoogleSignin, GoogleSigninButton } from 'react-native-google-signin';
 import GDrive from "react-native-google-drive-api-wrapper";
 
 import RNAlarm from 'react-native-alarm';
+
+import Icon from 'react-native-vector-icons/Ionicons';
+
+import ExemptScreenIcon from './exemptScreenIcon';
 
 
 export default class SettingsScreen extends React.Component {
@@ -71,11 +73,11 @@ export default class SettingsScreen extends React.Component {
 
 	static navigationOptions = ({ navigation }) => {
 
-		var newParams = {};
+		var {state: {params: {titleBar}}} = navigation,
 
-		Object.assign(newParams, navigation.state.params.titleBar, {headerRight: null});
+		currHR = ExemptScreenIcon({navigation,titleBar, nextIconExemptIndex: 3});
 
-	    return newParams;
+		return Object.assign( titleBar, {headerRight: currHR});
 	};
 
 	componentDidMount() {
@@ -129,16 +131,14 @@ export default class SettingsScreen extends React.Component {
 						</Text>
 					</View>
 
-					<TouchableOpacity onPress={() => alObj.alarmActive ? this.alarmToggleHandler(alObj.index) : false}
+					<Switch
 
-	    			style={[
-	    				{ backgroundColor: globalStyles.color, top: 20, borderRadius: 50, width: 35, height:35, paddingLeft: 7, paddingVertical: 5},
+						trackColor={{false: '#666', true: contentHeader.color}}
 
-	    				] }>
-	    			<Icon name={Platform.select({ios:'ios-timer', android: 'md-timer'})} style={{color: !alObj.alarmActive ? '#666': globalStyles.backgroundColor}}
+						onValueChange={() => alObj.alarmActive ? this.alarmToggleHandler(alObj.index) : false}
 
-	    				size={25} />
-	    		</TouchableOpacity>
+						thumbColor={globalStyles.color} value={alObj.alarmActive} disabled={!alObj.alarmActive}
+					/>
 				</View>)
 			}
 		},
@@ -189,7 +189,7 @@ export default class SettingsScreen extends React.Component {
     				
 	    				color={GoogleSigninButton.Color.Dark} disabled={gbDisable}
 	    				
-	    				style={{ width: 48, height: 48, marginBottom: 50 }} 
+	    				style={{ width: 48, height: 48, marginBottom: 50 }}
 	    			/>
 
 					<View style={[
@@ -200,7 +200,7 @@ export default class SettingsScreen extends React.Component {
 	    				] }>
 
 	    				<Icon name={Platform.select({ios:'ios-cloud-upload', android: 'md-cloud-upload'})} size={20} />
-	    				<Text> Google Drive</Text>
+	    				<Text onPress={() => !gbDisable ? this.gSignIn() : null}> {!gbDisable ? 'Google Drive': 'Signing in...'}</Text>
 	    			</View>
 				</View>
 			),
@@ -354,18 +354,23 @@ export default class SettingsScreen extends React.Component {
 
 			var evtId = 'activate-memo'+ind, titleStr  = 'EMAW BVM ' + ctx + ' alarm',
 
-			startDate = new Date(new Date().setHours(...timeFormat)), h = new Date(),
+			h = new Date();/*,
 
-			desc = 'Have you memorized a verse this ' + ctx+'?';
-			
+			desc = 'Have you memorized a verse this ' + ctx+'?'*/
 
-			RNAlarm.setAlarm((startDate.getTime()+''), //millisecond since epoch, x is the additional time since current date time in millisecond
+			// if time is behind, it means user wants alarm set for tomorrow
+			if (timeFormat[0] < h.getHours() || timeFormat[1] < h.getMinutes()) h.setDate(h.getDate() +1);
+
+			h.setHours(...timeFormat);
+
+
+			RNAlarm.setAlarm(new Date(h).getTime()+'', //millisecond since epoch, x is the additional time since current date time in millisecond
 				titleStr, //y is title to show in the notification
 				evtId, //isRetry, nullable 
-				'', //for android put the mp3 in raw directories project_name/android/app/src/main/res/raw. fileName is the name of the file without the .mp3 extension
+				'popcorn', //for android put the mp3 in raw directories project_name/android/app/src/main/res/raw. fileName is the name of the file without the .mp3 extension
 				() => updState('Added reminder'),// Success callback function
 				
-				(r) => updState("Alarm not set. We're past " + ctx) // Fail callback function
+				(r) => updState(r) // Fail callback function
 			);
 		}
 
@@ -376,7 +381,7 @@ export default class SettingsScreen extends React.Component {
 
 			// reset others that were preset if any
 			var reset = alarmNames
-			
+
 			.filter((s,d) => d != ind && that.state[s+'Alarm'].alarmActive)
 
 			.map(n => that.state[n+'Alarm']);

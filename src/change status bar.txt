@@ -1,0 +1,4 @@
+<StatusBar
+          barStyle="dark-content"
+          backgroundColor="#6a51ae"
+        />

@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 
 import {StyleSheet, Text, View, TouchableHighlight, FlatList, ImageBackground, Platform, } from 'react-native';
 
-import {DBProps, RelatedStyle} from './app-wide-styling';
+import {DBProps, RelatedStyle, AppScreens} from './app-wide-styling';
 
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -17,16 +17,6 @@ export default class MenuScreen extends React.Component {
 	  this.state = {globalStyles: {}, contentHeader: {}, titleBar: {}};
 	}
 
-	static defaultProps = {
-	   screens: [{name: 'Save verse', route:'SaveVerse',icon: Platform.select({ios:'ios-save', android:'md-save'})},
-
-	   	{name: 'Memorize', route:'MemorizeVerse',icon: Platform.select({ios:'ios-filing', android:'md-filing'})},
-
-	   	{name: 'Test yourself', route:'TestVerse',icon: Platform.select({ios:'ios-school', android:'md-school'})},
-
-	   	{name: 'Settings', route:'SettingsVerse',icon: Platform.select({ios:'ios-settings', android:'md-settings'})}],
-	 }
-
 	static navigationOptions = {
 		header: null
 	};
@@ -36,11 +26,13 @@ export default class MenuScreen extends React.Component {
 
 		DBProps(({appWideStyles}) => {
 
+			var contentHeader = RelatedStyle(appWideStyles,1);
+
 			SplashScreen.hide();
 
-			that.setState({globalStyles: appWideStyles, contentHeader: RelatedStyle(appWideStyles,1),
+			that.setState({globalStyles: appWideStyles, contentHeader,
 
-				titleBar: RelatedStyle(appWideStyles,0)
+				titleBar: {...RelatedStyle(appWideStyles,0), headerRight: that.getHeaderRight(contentHeader)}
 			})
 		});
 	}
@@ -56,7 +48,7 @@ export default class MenuScreen extends React.Component {
 
 				that.setState({globalStyles: appWideStyles, contentHeader: RelatedStyle(appWideStyles,1),
 
-					titleBar: RelatedStyle(appWideStyles,0)
+					titleBar: {...RelatedStyle(appWideStyles,0), headerRight: that.getHeaderRight(appWideStyles)}
 				})
 			})
 		});
@@ -65,30 +57,54 @@ export default class MenuScreen extends React.Component {
 	render () {
 		return (<ImageBackground source={require('../assets/menu-bg.jpg')} style={styles.menuBg}>
 			<FlatList
-	          data={this.props.screens} numColumns={2} key='grandMenu' columnWrapperStyle={styles.dataColumn}
+	          data={AppScreens} numColumns={2} key='grandMenu' columnWrapperStyle={styles.dataColumn}
 
-	          style={{marginHorizontal: 25}} renderItem={function ({item: {name,route,icon, color}}, index) {
+	          style={{marginHorizontal: 20}} renderItem={function ({item: {name,route,icon, color}}, index) {
 
-	          	var {globalStyles, contentHeader, titleBar} = this.state,
+	          	return <TouchableHighlight key={index} style={{minWidth: '45%' }} underlayColor='transparent'
 
-	          	marginType = index%2 ? styles.frontMargin: styles.backMargin;
+					onPress={() => {
+						var {routeName, tempProps} = this.iconNavigate(route);
 
-	          	return <TouchableHighlight key={index} style={{flex:1, flexDirection:'row'}} underlayColor='transparent'
-
-					onPress={() => this.props.navigation.navigate(route,
-						{bodyStyles: globalStyles, titleBar: titleBar, contentHeader: contentHeader,
-
-							dbRefresh: this.refreshStyles.bind(this)
-						}
-					)}
-					>
-					<View style={[styles.menuCards, {backgroundColor: '#0009'}, marginType]}>
+						this.props.navigation.navigate(routeName, tempProps);
+					}}
+				>
+					<View style={[styles.menuCards, {backgroundColor: '#0009'}]}>
 						<Icon name={icon} style={{fontSize:40, color: '#fff'}} />
 						<Text style={{color: '#fff'}}>{name}</Text>
 					</View>
 				</TouchableHighlight>
 	          }.bind(this)}
-	        /></ImageBackground>);
+	        />
+	    </ImageBackground>);
+	}
+
+	iconNavigate (routeName) {
+
+	    var {globalStyles, contentHeader, titleBar} = this.state;
+		
+		return {
+			routeName,
+
+			tempProps:
+				{
+					bodyStyles: globalStyles, titleBar, contentHeader,
+
+					dbRefresh: this.refreshStyles.bind(this)
+				}
+		};
+	}
+
+	getHeaderRight({headerTintColor}) {
+		return <View style={styles.quickNav} key='quickNav'>
+			{AppScreens.map(({icon, route},u) =>
+
+				<Icon name={icon} key={'quickNav:'+u}
+
+		  			onPress={() => this.iconNavigate(route)} style={{fontSize:20, color: headerTintColor, marginRight: 10}}
+		  		/>
+		  	)}
+		</View>;
 	}
 }
 
@@ -96,7 +112,7 @@ const styles = StyleSheet.create({
   menuCards: {
     borderRadius: 10,
     flex: 1,
-    minHeight: 200,
+    minHeight: 150,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10
@@ -113,5 +129,11 @@ const styles = StyleSheet.create({
   },
   frontMargin: {
   	marginRight: 100
+  },
+  quickNav: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
+    paddingTop: 5,
   }
 });

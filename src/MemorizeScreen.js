@@ -8,6 +8,8 @@ import store from 'react-native-simple-store';
 
 import FolderComp from './FolderComp';
 
+import ExemptScreenIcon from './exemptScreenIcon';
+
 
 export default class MemorizeScreen extends React.Component {
 
@@ -35,26 +37,40 @@ export default class MemorizeScreen extends React.Component {
 	// show right header only when not on test screen
 	static navigationOptions = ({ navigation} ) => {
 
-		var titleBar = navigation.state.params.titleBar, headerRightHndlr = navigation.getParam('headerRightHndlr'),
+		var titleBar = navigation.state.params.titleBar, headerRightHndlr = navigation.getParam('headerRightHndlr', null),
 
-		isTest = navigation.getParam('screenMode') === 'test', noRightHeader = {};
+		isTest = navigation.getParam('screenMode') === 'test',
 
-		Object.assign(noRightHeader, titleBar, {headerRight: null});
+		currHeaderRight = isTest ?
 
-		if (navigation.state.routeName === 'MemorizeVerse' || isTest) {
+			ExemptScreenIcon({navigation,titleBar, nextIconExemptIndex: 2})
 
-			return headerRightHndlr === void(0) || isTest ? noRightHeader: (() => {
-				titleBar.headerRight = <Icon name={Platform.select({ios:'ios-more', android: 'md-more'})}
+		:	ExemptScreenIcon({navigation,titleBar, nextIconExemptIndex: 1});
+		
+		return headerRightHndlr === null || isTest ?
 
-		            style={{color: navigation.getParam('headerRightColor'), fontSize:35, /*right: 10,*/ width:30}}
-		          
-		            onPress={() => headerRightHndlr()}
-		          />;
+			Object.assign(titleBar, {headerRight: currHeaderRight})
 
-		    	return titleBar;
-		    })()
-		}// tb changed inside. refer to it as params
-		return navigation.state.params;
+		: 	(() => {
+				
+			titleBar.headerRight = currHeaderRight.key == 'mergedNav' ?
+
+				currHeaderRight // we've merged with our own right button so don't repeat
+				
+				: <View style={{flexDirection: 'row', flexWrap: 'nowrap'}} key='mergedNav'>{/*runs ony on screen init*/}
+
+					{currHeaderRight}{/*nav buttons*/}
+
+					<Icon name={Platform.select({ios:'ios-more', android: 'md-more'})}
+
+			            style={{color: navigation.getParam('headerRightColor'), fontSize: 25, marginRight: 10, paddingHorizontal: 5, marginTop: 5 /*, width:30*/}}
+			          
+			            onPress={() => headerRightHndlr()}
+			        />
+			    </View>;
+
+	    	return titleBar;
+	    })()
 	};
   
   	// this runs after the first `render` call
@@ -66,6 +82,7 @@ export default class MemorizeScreen extends React.Component {
 		// mutate over folders, if any
   		// this runs async
 		if (!headerRightHndlr) that.props.navigation.setParams({
+			// custom header right menu
 			headerRightHndlr: function() {
 				var currData = that.state.displayData.props.data,
 
@@ -77,9 +94,7 @@ export default class MemorizeScreen extends React.Component {
 
 	    			// ind of clicked menu item
 	    			that.headerMenuClose(ind), modalChild: !target ? 3: 7})
-	    	},
-
-	    	headerRightColor: titleBar.headerTintColor
+	    	}
     	});
 
   		target

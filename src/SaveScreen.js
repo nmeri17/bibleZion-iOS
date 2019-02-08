@@ -1,10 +1,14 @@
 import React, {Component} from 'react';
 
-import {StyleSheet, TextInput, TouchableOpacity, FlatList, View, Picker, Text, TouchableHighlight, } from 'react-native';
+import {StyleSheet, TextInput, TouchableOpacity, FlatList, View, Text, TouchableHighlight, Platform, } from 'react-native';
 
 import Toast from 'rn-toaster';
 
 import store from 'react-native-simple-store';
+
+import Icon from 'react-native-vector-icons/Ionicons';
+
+import ExemptScreenIcon from './exemptScreenIcon';
 
 
 export default class SaveScreen extends React.Component {
@@ -14,16 +18,16 @@ export default class SaveScreen extends React.Component {
 
 		var {navigation: {state: {params}}} = props;
 
-		this.state = { allFolders: [{folderName: ''}], selectedFolder: 'Select a folder', globalStyles: params.bodyStyles};
+		this.state = { allFolders: [], selectedFolder: null, globalStyles: params.bodyStyles};
 	}
 
 	static navigationOptions = ({ navigation }) => {
 
-		var newParams = {};
+		var {state: {params: {titleBar}}} = navigation,
 
-		Object.assign(newParams, navigation.state.params.titleBar, {headerRight: null});
+		currHR = ExemptScreenIcon({navigation,titleBar, nextIconExemptIndex: 0});
 
-	    return newParams;
+		return Object.assign( titleBar, {headerRight: currHR });
 	  };
 
 	componentDidMount() {
@@ -31,13 +35,7 @@ export default class SaveScreen extends React.Component {
 
 		store.get('AllFolders').then(arr => {
 
-			if (!arr || !arr.length) allFolders[0].folderName = 'No folders';
-
-			else {
-				allFolders[0].folderName = selectedFolder;
-
-				allFolders.push(...arr);
-			}
+			if (arr) allFolders.push(...arr);
 
 			that.setState({allFolders: allFolders});			
 		});
@@ -50,60 +48,69 @@ export default class SaveScreen extends React.Component {
     }
 
 	render() {
-		var {allFolders, globalStyles} = this.state, {contentHeader} = this.props.navigation.state.params,
+		var {allFolders, globalStyles: {color, backgroundColor}, selectedFolder} = this.state, {contentHeader} = this.props.navigation.state.params,
+
+		foldersComponent = <View style={{ paddingHorizontal: 10}}>
+
+			<Text style={[contentHeader, {marginVertical:10}]}>Select a folder</Text>
+
+			{allFolders.length ?
+				<FlatList
+	    			data={allFolders} key='fldrSel' numColumns={3} initialNumToRender={10}
+
+	    			renderItem={({item: {folderName}, index, separators}) => <View key={'folderNames'+index} style={styles.dataColumn}>
+			        	<Icon
+				    		name={Platform.select({ios:'ios-folder', android: 'md-folder'})} style={[{fontSize: 80, color: folderName !== selectedFolder ? color: '#222'}]}
+
+				    		onPress={() => this.selectAFolder(folderName)}
+			        	/>
+			        	<Text style={{ color}}>{folderName}</Text>
+			        </View>}
+
+	    			keyExtractor={(item, index) => 'folderView:'+index} extraData={{selectedFolder}}
+	    		/>
+	    	:
+	    		<Text style={{color: color}}>No folders</Text>
+	    	}
+    	</View>,
 
 		saveCriteria = [// represents fields that make up a new folder
-    		<TextInput ref='quotation' placeholder='New Bible quotation' underlineColorAndroid={globalStyles.color}
+    		<TextInput ref='quotation' placeholder='Chapter & Verse' underlineColorAndroid={color}
 
-    			style={{color: globalStyles.color}} autoCapitalize='sentences' autoCorrect={true}
+    			style={{color: color}} autoCapitalize='sentences' autoCorrect={true}
 
-    			placeholderTextColor={globalStyles.color} />,
+    			placeholderTextColor={color} />,
 
-    		<TextInput ref='text' placeholder='Verse text' underlineColorAndroid={globalStyles.color} multiline={true}
+    		<TextInput ref='text' placeholder='Verse text' underlineColorAndroid={color} multiline={true}
 
-    			style={{color: globalStyles.color}} autoCapitalize='sentences' autoCorrect={true}
+    			style={{color: color}} autoCapitalize='sentences' autoCorrect={true}
 
-    			placeholderTextColor={globalStyles.color} />, 
+    			placeholderTextColor={color} />, 
 
-    		<Picker key='fldrDrp' mode='dropdown' onValueChange={(val,i) => this.selectAFolder(val,i)}
-
-				selectedValue={this.state.selectedFolder} enabled={allFolders.length !== 1} style={{color: contentHeader.color}}
-			>
-				{allFolders.map((obj,i) => <Picker.Item label={obj.folderName} value={obj.folderName} key={'pki'+i} />)}
-			</Picker>,
+    		foldersComponent,
 
     		<TouchableOpacity onPress={() => allowSave() ? this.createNew() : false}
 
-    			style={[{ backgroundColor: globalStyles.color}, styles.saveButton] }>
-    			<Text style={{color:globalStyles.backgroundColor}}>Save</Text>
+    			style={[{ backgroundColor: color/*, maxWidth: 50*/}, styles.saveButton] }>
+    			<Text style={{color:backgroundColor, textAlign: 'center'}}>Save</Text>
     		</TouchableOpacity>
 		],
 
-		mainStyles = {flex:1, paddingVertical: 5, paddingHorizontal:3, backgroundColor: globalStyles.backgroundColor,
+		mainStyles = {flex:1, paddingVertical: 5, paddingHorizontal:3, backgroundColor,
 			flexDirection: 'row', flexWrap: 'wrap'
 		},
 
 		allowSave = () => Object.keys(this.refs).every(r => this.refs[r]._lastNativeText !== void(0))
 
-			&& this.state.selectedFolder !== 'select a folder';
+			&& this.state.selectedFolder !== null;
 
 	    return (
 	    	<View style={mainStyles}>
 
 	    		<FlatList
-	    			data={saveCriteria}
+	    			data={saveCriteria} extraData={saveCriteria}
 
-					/*ItemSeparatorComponent={Platform.OS !== 'android' && ({highlighted}) => (
-						<View style={[style.separator, highlighted && {marginLeft: 0}]} />
-					)}*/
-
-	    			renderItem={({item, index, separators}) => (
-   						
-   						<TouchableHighlight onShowUnderlay={separators.highlight} onHideUnderlay={separators.unhighlight}>
-   							
-   							<View style={globalStyles}>{item}</View>
-   						</TouchableHighlight>
-   					)}
+	    			renderItem={({item, index, separators}) => <View style={{color, backgroundColor}}>{item}</View>}
 
 	    			keyExtractor={(item, index) => 'saveItems:'+index} />
  
@@ -122,8 +129,6 @@ export default class SaveScreen extends React.Component {
 
 		// remove picker init
 		var allFolders = this.state.allFolders, that = this;
-
-		allFolders.shift();
 
 		var toast = +Object.keys(propObj).every(y => propObj[y].length > 1),
 
@@ -156,8 +161,8 @@ export default class SaveScreen extends React.Component {
 		}
 	}
 
-	selectAFolder (val,i) {
-		this.setState({selectedFolder:val});
+	selectAFolder (selectedFolder) {
+		this.setState({selectedFolder});
 	}
 
 	// just for toasts
@@ -185,14 +190,11 @@ const styles = StyleSheet.create({
   	height: 30,
   	marginTop: 180,
   },
-  hide: {
-  	display: 'none',
-  },
-  folderPicker: {},
   saveButton: {
-  	marginHorizontal: 5,
-  	paddingVertical: 10,
-  	paddingHorizontal: 5,
-  	borderRadius: 5,
+	  	marginHorizontal: 5,
+	  	marginTop: 30,
+	  	paddingVertical: 10,
+	  	paddingLeft: 10,
+	  	borderRadius: 5,
   }
 });

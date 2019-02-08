@@ -1,5 +1,7 @@
 import React, {Component} from 'react';
 
+import { Platform, } from 'react-native';
+
 import store from 'react-native-simple-store';
     
 // default appearance
@@ -141,7 +143,17 @@ init = () => store.get('AllFolders').then(function (arr) {
 	data.ready = true;
 
 	if( typeof callback == 'function' ) callback(data);
-});
+}),
+
+AppScreens = [
+	{name: 'Save verse', route:'SaveVerse',icon: Platform.select({ios:'ios-save', android:'md-save'})},
+
+   	{name: 'Memorize', route:'MemorizeVerse',icon: Platform.select({ios:'ios-filing', android:'md-filing'})},
+
+   	{name: 'Test yourself', route:'TestVerse',icon: Platform.select({ios:'ios-school', android:'md-school'})},
+
+   	{name: 'Settings', route:'SettingsVerse',icon: Platform.select({ios:'ios-settings', android:'md-settings'})}
+];
 
 
-module.exports = {DBProps: o, RelatedStyle: getRelatedStyle};
+module.exports = {DBProps: o, RelatedStyle: getRelatedStyle, AppScreens, };

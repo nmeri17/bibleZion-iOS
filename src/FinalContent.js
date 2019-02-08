@@ -20,11 +20,9 @@ export default class FinalContent extends React.Component {
 
 		var {navigation: {state: {params}}} = props;
 
-		this.state = {modalChild: null, res2: null, res1: null, globalStyles: params.bodyStyles,
+		this.state = {modalChild: null, noDiff: null, noDiff2: null, globalStyles: params.bodyStyles,
 
 			titleBar: params.titleBar, contentHeader: params.contentHeader, childCloseToggle: null,
-
-			displayMemo: false,
 		};
 	}
 
@@ -47,7 +45,7 @@ export default class FinalContent extends React.Component {
     }
 
 	render() {
-		var {globalStyles, contentHeader, titleBar, modalChild, displayMemo} = this.state,
+		var {globalStyles, contentHeader, titleBar, modalChild, displayMemo, noDiff, noDiff2, childCloseToggle} = this.state,
 
 		{navigation: {state: {params}}} = this.props, that = this, {backgroundColor, color, fontSize} = globalStyles;
 
@@ -60,18 +58,18 @@ export default class FinalContent extends React.Component {
 
 			style={{paddingHorizontal: 15}}>
 				
-				<Text style={[contentHeader, {fontSize: fontSize}]}>Title</Text>
+				<Text style={[contentHeader, { fontSize}]}>Title</Text>
 				
-				<Text style={[fzContent, {marginBottom: 15, left: 5, color: globalStyles.color}]}>{targetObj.quotation}</Text>
+				<Text style={[fzContent, {marginBottom: 15, left: 5, color}]}>{targetObj.quotation}</Text>
 
 				<View>
-					<Text style={[contentHeader, {fontSize: fontSize}]}>Reading</Text>
+					<Text style={[contentHeader, {fontSize}]}>Reading</Text>
 
 					<TextInput multiline={true} style={[styles.testBox, fzContent]} placeholder='Type here' ref='testBox'
 
-		    			style={{color: globalStyles.color}} autoCapitalize='sentences' autoCorrect={true}
+		    			style={{color: color}} autoCapitalize='sentences' autoCorrect={true}
 
-		    			placeholderTextColor={globalStyles.color}
+		    			placeholderTextColor={color}
 		    		/>
 					
 					<TouchableOpacity onPress={() => {
@@ -82,7 +80,7 @@ export default class FinalContent extends React.Component {
 
 		    			style={[{ backgroundColor: color}, styles.checkButton] }>
 		    			
-		    			<Text style={{color:backgroundColor}}>Check</Text>
+		    			<Text style={{color:backgroundColor, textAlign: 'center', width: '100%'}}>Check</Text>
 		    		</TouchableOpacity>
 				</View>
 			</View>
@@ -93,33 +91,27 @@ export default class FinalContent extends React.Component {
 			var allScreens = params.target.map((obj,n) => 
 				(<View>
 					<ImageBackground source={require('../assets/IMG-20181130-WA0006.jpg')} style={styles.parchment}>
-						<View><SectionList
-							renderItem={({item, index, separators}) => item}
-		  
-		  					renderSectionHeader={({section: {title}}) => (
-		    			
-		    					<Text style={[ {fontSize: fontSize, fontFamily: 'Times New Roman'}]}>{title}</Text>
-		  					)}
+						<View>
+							<SectionList
+								renderItem={({item, index, separators}) => item}
+			  
+			  					renderSectionHeader={({section: {title}}) => (
+			    			
+			    					<Text style={[ { fontSize, fontFamily: 'Times New Roman'}]}>{title}</Text>
+			  					)}
 
-		  					sections={[
-								{title: 'Quotation', data: [
+			  					sections={[
+									{title: 'Quotation', data: [ <Text style={styles.memoData}
 
-									<Text style={styles.memoData}
+										onPress={() => that.setState({displayMemo: !displayMemo})}>{obj.quotation}</Text> ]},
 
-										onPress={() => that.setState({displayMemo: !displayMemo})}
-									>
-										{ !displayMemo ? 'Tap to show ' + obj.quotation: 'Hide ' + obj.quotation}
+									{title: 'Reading', data: [<Text style={[styles.memoData, styles.boldTxt, {textAlign: 'center', fontSize: 35, display: displayMemo ? 'flex': 'none'}]}>{obj.text}</Text>]
+									},
+								]} key={n} style={[{minHeight:400, flex: 1}, globalStyles, {backgroundColor: 'transparent'}]}
 
-									</Text>
-								]},
-								{title: 'Reading', data: [<Text style={[styles.memoData, {display: displayMemo ? 'flex': 'none'}]}>
-
-									{obj.text}</Text>]
-								},
-							]} key={n} style={[{minHeight:400, flex: 1}, globalStyles, {backgroundColor: 'transparent'}]}
-
-							keyExtractor={(item, index) => 'lastVisited:' + index}
-						/></View>
+								keyExtractor={(item, index) => 'lastVisited:' + index}
+							/>
+						</View>
 					</ImageBackground>
 				</View>)
 			);
@@ -140,11 +132,11 @@ export default class FinalContent extends React.Component {
 
 		return <FolderComp
 
-			formattedComponents={contextView} noDiff={this.state.res1} noDiff2={this.state.res2}
+			formattedComponents={contextView} noDiff={noDiff} noDiff2={noDiff2}
 
-			modalChild={this.state.modalChild} contentHeader={contentHeader} titleBar={titleBar}
+			modalChild={modalChild} contentHeader={contentHeader} titleBar={titleBar}
 
-			bodyStyles={globalStyles} onChildModalClose={this.state.childCloseToggle}
+			bodyStyles={globalStyles} onChildModalClose={childCloseToggle}
 		/>;
 	}
 
@@ -159,13 +151,13 @@ export default class FinalContent extends React.Component {
 		// update state to display modal
 		this.setState((state, props) => {
 
-			var noDiff = GoodToBad(userInput.trim(), target, [styles.correctText, {fontWeight: '700'}]),
+			var noDiff = GoodToBad(userInput.trim(), target, [styles.correctText, styles.boldTxt]),
 
-			noDiff2 = BadToGood(target, userInput.trim(), [styles.nullText, {fontWeight: '700'}]);
+			noDiff2 = BadToGood(target, userInput.trim(), [styles.nullText, styles.boldTxt]);
 
 			if (!noDiff) return {modalChild: 1, childCloseToggle: () => props.navigation.goBack()};
 
-			else return {modalChild: 2, res1: noDiff, res2: noDiff2, childCloseToggle: null};
+			else return {modalChild: 2, noDiff, noDiff2, childCloseToggle: null};
 		});
 	}
 }
@@ -197,5 +189,6 @@ const styles = StyleSheet.create({
   memoData:{
   	marginBottom:10,
   	fontFamily: 'Times New Roman',
-  }
+  },
+  boldTxt: {fontWeight: '700'}
 });

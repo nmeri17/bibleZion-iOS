@@ -91,7 +91,9 @@ export default class FolderComp extends React.Component {
 	modalContents () {
 		var {globalStyles, contentHeader, verseText} = this.state, {backgroundColor, color} = globalStyles,
 
-		{clickPath} = this.props, {checkButton, headerMenuItem} = styles;
+		{clickPath} = this.props, {checkButton, headerMenuItem, centerText} = styles,
+
+		buttonTxt = {color: backgroundColor, ...centerText};
 
 		return [
 			// 0: create folder
@@ -103,7 +105,7 @@ export default class FolderComp extends React.Component {
 				<TouchableOpacity onPress={() => this.folderSave()}
 
 	    			style={[{ backgroundColor: color}, checkButton] }>
-	    			<Text style={{color: backgroundColor}}>Create folder</Text>
+	    			<Text style={[buttonTxt ]}>Create folder</Text>
 	    		</TouchableOpacity>
 			</View>,
 
@@ -115,7 +117,7 @@ export default class FolderComp extends React.Component {
 
 	    			style={[{ backgroundColor: color}, checkButton] }>
 	    			
-	    			<Text style={{color: backgroundColor}}>Test another verse</Text>
+	    			<Text style={[buttonTxt]}>Test another verse</Text>
 
 	    		</TouchableOpacity>
 			</View>,
@@ -136,7 +138,7 @@ export default class FolderComp extends React.Component {
 
 	    			style={[{ backgroundColor: color}, checkButton] }>
 	    			
-	    			<Text style={{color: backgroundColor}}>Try again</Text>
+	    			<Text style={[buttonTxt]}>Try again</Text>
 
 	    		</TouchableOpacity>
 			</View>,
@@ -166,7 +168,7 @@ export default class FolderComp extends React.Component {
 
 	    			style={[{ backgroundColor: color}, checkButton] }>
 
-	    			<Text style={{color: backgroundColor}}>Rename</Text>
+	    			<Text style={[buttonTxt]}>Rename</Text>
 	    		
 	    		</TouchableOpacity>
 			</View>,
@@ -209,7 +211,7 @@ export default class FolderComp extends React.Component {
 
 	    			style={[{ backgroundColor: color}, checkButton] }>
 	    			
-	    			<Text style={{color: backgroundColor}}>Update</Text>
+	    			<Text style={[buttonTxt]}>Update</Text>
 	    		</TouchableOpacity>
 			</View>,
 
@@ -447,10 +449,11 @@ const styles = StyleSheet.create({
 		marginTop: 10
 	},
 	  headerMenu: {
-	  	left: 200,
+	  	alignSelf: 'flex-end',
+	  	marginRight: 10,
 	  	top: 50, // this should've been read from the icon's position
 		backgroundColor: '#eee',
-		maxWidth: 120,
+		minWidth: 130,
 		borderRadius: 5
 	  },
 	  checkButton: {
@@ -468,5 +471,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingTop: 13,
 		paddingBottom: 3
+	  },
+	  centerText: {
+	  	textAlign: 'center',
+	  	width: '100%'
 	  }
 });
